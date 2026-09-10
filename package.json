@@ -1,0 +1,9 @@
+{
+  "name": "pizza-burger-cafe-egypt",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Static Egyptian restaurant menu PWA",
+  "scripts": {
+    "dev": "npx serve ."
+  }
+}
