@@ -1,4 +1,6 @@
 (function(){
+  const deliveryAdminWithGuard=window.renderAdmin;
+  window.renderAdmin=async function(){try{return await deliveryAdminWithGuard()}catch(e){if(!store?.restaurant){return}throw e}};
   window.checkout=function(){
     if(typeof tableFromUrl==='function' && tableFromUrl()) return;
     const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
@@ -16,9 +18,7 @@
     const name=$('#cust')?.value.trim()||'عميل';
     const phone=$('#customerPhone')?.value.trim()||'';
     const address=$('#addr')?.value.trim()||'';
-    const pay=$('#pay')?.value||'cash';
-    const transferPhone=$('#transferPhone')?.value.trim()||'';
-    const proofFile=$('#proof')?.files?.[0]||null;
+    const pay=$('#pay')?.value||'cash',transferPhone=$('#transferPhone')?.value.trim()||'',proofFile=$('#proof')?.files?.[0]||null;
     if(!name||!phone||!address)return toast('اكتب الاسم ورقم الهاتف والعنوان');
     if(pay==='vodafone'&&(!transferPhone||!proofFile))return toast('أدخل رقم التليفون المحوّل منه وأرفق صورة التحويل');
     const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
