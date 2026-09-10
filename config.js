@@ -1,7 +1,7 @@
 window.APP_CONFIG={
   mode:'supabase',
   supabaseUrl:'https://znnnkoujfuweydvbkejh.supabase.co',
-  supabaseAnonKey:'sb_publishable_gjYA4-E-BL0X1hc3YugqyQ_1VaOo_se',
+  supabaseAnonKey:'sb_publishable_gjYA4-E-B0L1hc3YugqyQ_1VaOo_se',
   restaurantSlug:'pizza-burger',
   currency:'جنيه',
   defaultTheme:'#111111',
@@ -17,3 +17,14 @@ window.APP_CONFIG={
     {id:'p5',category_id:'cat4',name:'بطاطس',description:'بطاطس مقرمشة',price:60,image:'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800',available:true,sort_order:5}
   ]
 };
+window.addEventListener('DOMContentLoaded',function(){
+  var s=document.createElement('script');
+  s.src='delivery-gps.js?v=1';
+  s.onload=function(){
+    var f=document.createElement('script');
+    f.src='delivery-gps-fix.js?v=1';
+    f.onload=function(){try{window.renderRouter&&window.renderRouter()}catch(e){console.error(e)}};
+    document.body.appendChild(f);
+  };
+  document.body.appendChild(s);
+});
