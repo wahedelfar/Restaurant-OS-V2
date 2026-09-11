@@ -32,27 +32,5 @@
 <script src="driver-app-v1.js?v=3"></script>
 <script src="pwa-install.js?v=11"></script>
 <script src="dine-in-v10-fix.js?v=2"></script>
-<script>
-window.addEventListener('load',function(){
-  setTimeout(function(){
-    try{
-      var s=document.createElement('script');
-      s.src='delivery-v7-features.js?v=3';
-      s.async=true;
-      s.onerror=function(){console.warn('Delivery V7 failed to load; core app remains active')};
-      document.body.appendChild(s);
-      setTimeout(function(){
-        try{
-          var c=document.createElement('script');
-          c.src='dine-in-customer-v11.js?v=3';
-          c.async=true;
-          c.onerror=function(){console.warn('Dine-in customer V11 failed to load')};
-          document.body.appendChild(c);
-        }catch(e){console.warn('Dine-in customer V11 loader',e)}
-      },900);
-    }catch(e){console.warn('Delivery V7 loader',e)}
-  },1200);
-});
-</script>
 </body>
 </html>
