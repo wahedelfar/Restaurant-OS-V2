@@ -4,23 +4,23 @@
   window.__ROS_DINEIN_V9_FIX__=true;
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  const ok=()=>!!(window.db&&window.store&&window.store.restaurant&&window.store.restaurant.id);
+  const ok=()=>!!(db&&store&&store.restaurant&&store.restaurant.id);
   const esc=v=>typeof window.esc==='function'?window.esc(v??''):String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
   const money=v=>typeof window.money==='function'?window.money(v):`${Number(v||0).toFixed(0)} جنيه`;
-  const toast=m=>{try{window.toast?window.toast(m):console.log(m)}catch(_){}};
+  const toast=m=>{try{window.toast?window.toast(m):console.log(m)}catch(_) {}};
   const prep=[5,15,30,45,60];
 
   async function createDineOrder(){
-    const table=typeof window.tableFromUrl==='function'?window.tableFromUrl():null;
+    const table=typeof tableFromUrl==='function'?tableFromUrl():null;
     if(!table||!ok()) return false;
-    if(!Array.isArray(window.cart)||!window.cart.length){toast('السلة فارغة');return true;}
+    if(!Array.isArray(cart)||!cart.length){toast('السلة فارغة');return true;}
     const name=document.querySelector('#cust')?.value.trim()||'عميل';
-    const items=window.cart.map(x=>({product_id:x.id,quantity:Number(x.qty||1)}));
+    const items=cart.map(x=>({product_id:x.id,quantity:Number(x.qty||1)}));
     const btn=document.querySelector('#rosDineSubmitBtn');
     if(btn){btn.disabled=true;btn.textContent='جارٍ إرسال الطلب...';}
     try{
-      const r=await window.db.rpc('create_dine_in_order',{
-        p_restaurant_id:window.store.restaurant.id,
+      const r=await db.rpc('create_dine_in_order',{
+        p_restaurant_id:store.restaurant.id,
         p_table_number:Number(table),
         p_customer_name:name,
         p_items:items
@@ -29,8 +29,8 @@
       const row=Array.isArray(r.data)?r.data[0]:r.data;
       const token=row?.tracking_token;
       if(!token) throw new Error('لم يتم إنشاء رابط متابعة الطلب');
-      window.cart=[];
-      if(typeof window.updateCart==='function')window.updateCart();
+      cart=[];
+      if(typeof updateCart==='function')updateCart();
       const modal=document.querySelector('#modal');
       if(modal){
         modal.innerHTML=`<div class="fixed inset-0 modal z-50 p-4 grid place-items-center"><div class="checkout-modal w-full max-w-md rounded-3xl p-6 text-center">
@@ -42,7 +42,7 @@
           <button id="rosBackAfterOrder" type="button" class="mt-3 w-full py-3 rounded-2xl border font-bold">العودة للقائمة</button>
         </div></div>`;
         document.querySelector('#rosTrackOrderBtn')?.addEventListener('click',()=>{location.hash='track/'+encodeURIComponent(token)});
-        document.querySelector('#rosBackAfterOrder')?.addEventListener('click',()=>{if(typeof window.closeModal==='function')window.closeModal();else modal.innerHTML='';});
+        document.querySelector('#rosBackAfterOrder')?.addEventListener('click',()=>{if(typeof closeModal==='function')closeModal();else modal.innerHTML='';});
       }
       return true;
     }catch(e){
@@ -58,7 +58,7 @@
     if(typeof window.checkout!=='function'||window.checkout.__rosV9)return;
     const original=window.checkout;
     const wrapped=function(){
-      const table=typeof window.tableFromUrl==='function'?window.tableFromUrl():null;
+      const table=typeof tableFromUrl==='function'?tableFromUrl():null;
       return table?showDineCheckout():original();
     };
     wrapped.__rosV9=true;
@@ -67,8 +67,8 @@
 
   function showDineCheckout(){
     if(!ok())return false;
-    const table=window.tableFromUrl();
-    if(!Array.isArray(window.cart)||!window.cart.length){toast('السلة فارغة');return true;}
+    const table=tableFromUrl();
+    if(!Array.isArray(cart)||!cart.length){toast('السلة فارغة');return true;}
     const modal=document.querySelector('#modal');
     if(!modal)return true;
     modal.innerHTML=`<div class="fixed inset-0 modal z-50 p-4 grid place-items-end md:place-items-center" onclick="if(event.target===this)closeModal()"><div class="checkout-modal w-full max-w-lg rounded-3xl p-5 max-h-[92vh] overflow-auto">
@@ -82,21 +82,21 @@
   }
 
   async function deleteAllOrdersFixed(){
-    if(!window.db||!window.store?.restaurant?.id){toast('بيانات المطعم غير متاحة');return;}
-    const rid=window.store.restaurant.id;
+    if(!db||!store?.restaurant?.id){toast('بيانات المطعم غير متاحة');return;}
+    const rid=store.restaurant.id;
     const btn=document.getElementById('deleteOrdersBtn');
     if(btn){btn.disabled=true;btn.textContent='جارٍ التحقق...';}
     try{
-      const q=await window.db.from('orders').select('id').eq('restaurant_id',rid).limit(1);
+      const q=await db.from('orders').select('id').eq('restaurant_id',rid).limit(1);
       if(q.error)throw q.error;
       if(!q.data?.length){toast('لا توجد طلبات للحذف');return;}
       if(!confirm('سيتم حذف جميع الطلبات السابقة نهائيًا. هل أنت متأكد؟'))return;
       if(btn)btn.textContent='جارٍ الحذف...';
-      const d=await window.db.from('orders').delete().eq('restaurant_id',rid);
+      const d=await db.from('orders').delete().eq('restaurant_id',rid);
       if(d.error)throw d.error;
-      if(Array.isArray(window.store.orders))window.store.orders=[];
+      if(Array.isArray(store.orders))store.orders=[];
       toast('تم حذف الطلبات السابقة');
-      if(typeof window.renderAdmin==='function')await window.renderAdmin();
+      if(typeof renderAdmin==='function')await renderAdmin();
     }catch(e){console.error('deleteAllOrdersFixed',e);toast('تعذر حذف الطلبات: '+(e?.message||'خطأ غير معروف'));}
     finally{if(btn){btn.disabled=false;btn.textContent='حذف الطلبات السابقة';}}
   }
@@ -113,7 +113,7 @@
     if(!main)return;
     let panel=document.getElementById('rosV9DinePanel');
     if(!panel){panel=document.createElement('section');panel.id='rosV9DinePanel';panel.className='bg-white rounded-3xl p-5 mt-5';main.appendChild(panel);}
-    const q=await window.db.from('orders').select('id,table_number,customer_name,total,status,prep_minutes,admin_message,created_at,order_type').eq('restaurant_id',window.store.restaurant.id).eq('order_type','dine_in').order('created_at',{ascending:false}).limit(30);
+    const q=await db.from('orders').select('id,table_number,customer_name,total,status,prep_minutes,admin_message,created_at,order_type').eq('restaurant_id',store.restaurant.id).eq('order_type','dine_in').order('created_at',{ascending:false}).limit(30);
     if(q.error){console.warn('V9 dine panel query',q.error);return;}
     const rows=q.data||[];
     panel.innerHTML=`<div class="flex items-center justify-between gap-3"><div><div class="text-sm font-bold opacity-70">DINE-IN</div><h2 class="text-2xl font-extrabold">طلبات الصالة</h2></div><button id="rosV9Refresh" class="px-4 py-2 rounded-xl border font-bold">تحديث</button></div>
@@ -125,13 +125,13 @@
     document.getElementById('rosV9Refresh')?.addEventListener('click',renderPanel);
     panel.querySelectorAll('[data-v9-prep]').forEach(b=>b.addEventListener('click',async()=>{
       b.disabled=true;
-      const r=await window.db.from('orders').update({prep_minutes:Number(b.dataset.min)}).eq('id',b.dataset.v9Prep).eq('restaurant_id',window.store.restaurant.id);
+      const r=await db.from('orders').update({prep_minutes:Number(b.dataset.min)}).eq('id',b.dataset.v9Prep).eq('restaurant_id',store.restaurant.id);
       if(r.error)toast('تعذر حفظ وقت التجهيز: '+r.error.message);else {toast('تم حفظ وقت التجهيز');await renderPanel();}
       b.disabled=false;
     }));
     panel.querySelectorAll('[data-v9-status]').forEach(b=>b.addEventListener('click',async()=>{
       b.disabled=true;
-      const r=await window.db.from('orders').update({status:b.dataset.value,admin_message:b.dataset.message}).eq('id',b.dataset.v9Status).eq('restaurant_id',window.store.restaurant.id);
+      const r=await db.from('orders').update({status:b.dataset.value,admin_message:b.dataset.message}).eq('id',b.dataset.v9Status).eq('restaurant_id',store.restaurant.id);
       if(r.error)toast('تعذر تحديث حالة الطلب: '+r.error.message);else {toast('تم تحديث حالة الطلب');await renderPanel();}
       b.disabled=false;
     }));
