@@ -1,6 +1,7 @@
 -- Driver RPC repair for Restaurant OS V8
--- IMPORTANT: run this in the OLD V8 Supabase project: znnnkoujfuweydvbkejh
--- This fixes the customer_lat/customer_lng mapping and keeps the existing driver app intact.
+-- Target: OLD V8 Supabase project znnnkoujfuweydvbkejh
+-- Coordinates belong to orders.customer_lat/customer_lng.
+-- delivery_orders (alias dox) contains delivery state, not customer coordinates.
 
 create or replace function public.driver_get_orders(p_token uuid)
 returns table(
@@ -38,28 +39,56 @@ as $$
     dl.recorded_at
   from public.drivers d
   join public.delivery_orders dox
-    on dox.driver_id=d.id
+    on dox.driver_id = d.id
   join public.orders o
-    on o.id=dox.order_id
+    on o.id = dox.order_id
   left join lateral (
-    select l.latitude,l.longitude,l.recorded_at
+    select l.latitude, l.longitude, l.recorded_at
     from public.driver_locations l
-    where l.order_id=o.id
-      and l.driver_id=d.id
+    where l.order_id = o.id
+      and l.driver_id = d.id
     order by l.recorded_at desc
     limit 1
   ) dl on true
-  where d.access_token=p_token
-    and d.active=true
+  where d.access_token = p_token
+    and d.active = true
   order by o.created_at desc;
 $$;
 
 revoke all on function public.driver_get_orders(uuid) from public;
-grant execute on function public.driver_get_orders(uuid) to anon,authenticated;
+grant execute on function public.driver_get_orders(uuid) to anon, authenticated;
 
--- Also normalize the public tracking RPC so it cannot reference a delivery_orders
--- column for customer coordinates. Coordinates belong to orders; live driver
--- coordinates belong to driver_locations.
+-- Backward-compatible RPC name used by older cached driver clients.
+-- It delegates to the repaired canonical function and contains no direct
+-- reference to delivery_orders.customer_lat.
+create or replace function public.driver_get_orders_v2(p_token uuid)
+returns table(
+  id uuid,
+  customer_name text,
+  customer_phone text,
+  address text,
+  total numeric,
+  status text,
+  customer_lat double precision,
+  customer_lng double precision,
+  delivery_status text,
+  items jsonb,
+  driver_latitude double precision,
+  driver_longitude double precision,
+  driver_recorded_at timestamptz
+)
+language sql
+security definer
+set search_path=public
+as $$
+  select * from public.driver_get_orders(p_token);
+$$;
+
+revoke all on function public.driver_get_orders_v2(uuid) from public;
+grant execute on function public.driver_get_orders_v2(uuid) to anon, authenticated;
+
+-- Public customer tracking: customer coordinates are read from orders;
+-- live driver coordinates are read from driver_locations.
 create or replace function public.public_track_order(p_token uuid)
 returns table(
   order_id uuid,
@@ -100,23 +129,23 @@ as $$
     o.created_at
   from public.orders o
   join public.restaurants r
-    on r.id=o.restaurant_id
+    on r.id = o.restaurant_id
   left join public.delivery_orders dox
-    on dox.order_id=o.id
+    on dox.order_id = o.id
   left join public.drivers d
-    on d.id=dox.driver_id
+    on d.id = dox.driver_id
   left join lateral (
-    select l.latitude,l.longitude,l.recorded_at
+    select l.latitude, l.longitude, l.recorded_at
     from public.driver_locations l
-    where l.order_id=o.id
+    where l.order_id = o.id
     order by l.recorded_at desc
     limit 1
   ) dl on true
-  where o.tracking_token=p_token
+  where o.tracking_token = p_token
   limit 1;
 $$;
 
 revoke all on function public.public_track_order(uuid) from public;
-grant execute on function public.public_track_order(uuid) to anon,authenticated;
+grant execute on function public.public_track_order(uuid) to anon, authenticated;
 
 select 'driver RPC repaired' as result;
