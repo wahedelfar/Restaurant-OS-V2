@@ -1,44 +1,24 @@
 (function(){
   'use strict';
-  // Compatibility shim only. Canonical driver UI and GPS logic live in
-  // delivery-gps-clean-v2.js. Never render a second driver UI here.
   if(window.__ROS_DRIVER_APP_SHIM__) return;
   window.__ROS_DRIVER_APP_SHIM__=true;
 
-  // Keep older cached clients compatible while the database is migrated.
-  // The canonical RPC is driver_get_orders.
-  try{
-    if(window.db && typeof window.db.rpc==='function' && !window.__ROS_DRIVER_RPC_BRIDGE__){
-      const rpc=window.db.rpc.bind(window.db);
-      window.db.rpc=function(name,args){
-        if(name==='driver_get_orders_v2') name='driver_get_orders';
-        return rpc(name,args);
-      };
-      window.__ROS_DRIVER_RPC_BRIDGE__=true;
-    }
-  }catch(_){ }
-
-  // Load the final delivery repair layer after the base scripts have initialized.
-  // This keeps the original files intact while fixing GPS/tracking/dine-in behavior.
-  function loadFixes(){
-    if(window.__ROS_DELIVERY_FIXES_LOADER__)return;
-    window.__ROS_DELIVERY_FIXES_LOADER__=true;
+  // Canonical driver UI/GPS lives in delivery-gps-clean-v2.js.
+  // Do NOT load delivery-fixes-v5.js here: that legacy layer overrides checkout()
+  // and creates a second, non-canonical dine-in submission path.
+  // Keep only the driver-only inline map enhancement, and load it only on #driver/.
+  function isDriver(){return location.hash.startsWith('#driver/');}
+  function loadInlineMap(){
+    if(!isDriver()||window.__ROS_DRIVER_INLINE_MAP_LOADED__)return;
+    window.__ROS_DRIVER_INLINE_MAP_LOADED__=true;
     const s=document.createElement('script');
-    s.src='delivery-fixes-v5.js?v=1';
+    s.src='driver-inline-map-v1.js?v=1';
     s.async=true;
-    s.onerror=e=>console.warn('Delivery fixes failed to load',e);
+    s.onerror=()=>{console.warn('Driver inline map failed to load');window.__ROS_DRIVER_INLINE_MAP_LOADED__=false};
     document.body.appendChild(s);
-    // Driver-only UX repair: hide the install shortcut and add the inline customer map.
-    setTimeout(()=>{
-      if(window.__ROS_DRIVER_INLINE_MAP_LOADED__)return;
-      window.__ROS_DRIVER_INLINE_MAP_LOADED__=true;
-      const m=document.createElement('script');
-      m.src='driver-inline-map-v1.js?v=1';
-      m.async=true;
-      m.onerror=e=>console.warn('Driver inline map failed to load',e);
-      document.body.appendChild(m);
-    },350);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(loadFixes,100),{once:true});
-  else setTimeout(loadFixes,100);
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(loadInlineMap,100),{once:true});
+  }else setTimeout(loadInlineMap,100);
+  window.addEventListener('hashchange',()=>setTimeout(loadInlineMap,100));
 })();
