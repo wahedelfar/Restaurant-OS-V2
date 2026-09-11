@@ -1,5 +1,5 @@
-const CACHE_NAME='restaurant-os-v2-shell-v8';
-const SHELL=['./','./index.html','./config.js?v=2','./app.js?v=10','./cart-bridge.js?v=3','./delivery-gps-clean-v2.js?v=3','./delivery-admin-enhancements.js?v=2','./delivery-hardening-v4.js?v=3','./pwa-install.js?v=10','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE_NAME='restaurant-os-v2-shell-v9';
+const SHELL=['./','./index.html','./config.js?v=3','./app.js?v=10','./cart-bridge.js?v=3','./delivery-gps-clean-v2.js?v=4','./delivery-admin-enhancements.js?v=2','./delivery-hardening-v4.js?v=3','./driver-app-v1.js?v=3','./driver-fix-v3.js?v=1','./pwa-install.js?v=10','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()).catch(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;
