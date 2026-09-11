@@ -8,7 +8,7 @@
   const BUCKET='product-images';
 
   function getRestaurantId(){
-    return window.store?.restaurant?.id || null;
+    return (typeof store!=='undefined' && store.restaurant?.id) || null;
   }
 
   function setStatus(text, busy){
@@ -63,7 +63,7 @@
   }
 
   async function uploadProductImage(file){
-    if(!window.db) throw new Error('اتصال Supabase غير متاح');
+    if(typeof db==='undefined' || !db) throw new Error('اتصال Supabase غير متاح');
     const restaurantId=getRestaurantId();
     if(!restaurantId) throw new Error('بيانات المطعم غير متاحة');
     const compressed=await compressImage(file);
@@ -87,7 +87,6 @@
 
     const currentUrl=old.value||'';
     old.type='hidden';
-    old.id='pi';
     old.setAttribute('data-image-url','1');
 
     const file=document.createElement('input');
