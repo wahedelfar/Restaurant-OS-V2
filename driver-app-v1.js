@@ -1,10 +1,12 @@
 (function(){
   'use strict';
-  // Compatibility shim only. The canonical driver UI and GPS logic live in
-  // delivery-gps-clean-v2.js. Never call the removed driver_get_orders_v2 RPC.
+  // Compatibility shim only. Canonical driver UI and GPS logic live in
+  // delivery-gps-clean-v2.js. Never render a second driver UI here.
   if(window.__ROS_DRIVER_APP_SHIM__) return;
   window.__ROS_DRIVER_APP_SHIM__=true;
 
+  // Keep older cached clients compatible while the database is migrated.
+  // The canonical RPC is driver_get_orders.
   try{
     if(window.db && typeof window.db.rpc==='function' && !window.__ROS_DRIVER_RPC_BRIDGE__){
       const rpc=window.db.rpc.bind(window.db);
