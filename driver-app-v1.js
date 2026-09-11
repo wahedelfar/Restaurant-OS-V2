@@ -28,6 +28,16 @@
     s.async=true;
     s.onerror=e=>console.warn('Delivery fixes failed to load',e);
     document.body.appendChild(s);
+    // Driver-only UX repair: hide the install shortcut and add the inline customer map.
+    setTimeout(()=>{
+      if(window.__ROS_DRIVER_INLINE_MAP_LOADED__)return;
+      window.__ROS_DRIVER_INLINE_MAP_LOADED__=true;
+      const m=document.createElement('script');
+      m.src='driver-inline-map-v1.js?v=1';
+      m.async=true;
+      m.onerror=e=>console.warn('Driver inline map failed to load',e);
+      document.body.appendChild(m);
+    },350);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(loadFixes,100),{once:true});
   else setTimeout(loadFixes,100);
