@@ -39,6 +39,15 @@ window.addEventListener('load',function(){
       s.async=true;
       s.onerror=function(){console.warn('Delivery V7 failed to load; core app remains active')};
       document.body.appendChild(s);
+      setTimeout(function(){
+        try{
+          var c=document.createElement('script');
+          c.src='dine-in-customer-v11.js?v=2';
+          c.async=true;
+          c.onerror=function(){console.warn('Dine-in customer V11 failed to load')};
+          document.body.appendChild(c);
+        }catch(e){console.warn('Dine-in customer V11 loader',e)}
+      },900);
     }catch(e){console.warn('Delivery V7 loader',e)}
   },1200);
 });
