@@ -29,6 +29,6 @@
     s.onerror=e=>console.warn('Delivery fixes failed to load',e);
     document.body.appendChild(s);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(loadFixes,900),{once:true});
-  else setTimeout(loadFixes,900);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(loadFixes,100),{once:true});
+  else setTimeout(loadFixes,100);
 })();
