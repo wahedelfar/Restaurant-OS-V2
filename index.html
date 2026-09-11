@@ -35,17 +35,26 @@ window.addEventListener('load',function(){
   setTimeout(function(){
     try{
       var s=document.createElement('script');
-      s.src='delivery-v7-features.js?v=2';
+      s.src='delivery-v7-features.js?v=3';
       s.async=true;
       s.onerror=function(){console.warn('Delivery V7 failed to load; core app remains active')};
       document.body.appendChild(s);
       setTimeout(function(){
         try{
           var c=document.createElement('script');
-          c.src='dine-in-customer-v11.js?v=2';
+          c.src='dine-in-customer-v11.js?v=3';
           c.async=true;
           c.onerror=function(){console.warn('Dine-in customer V11 failed to load')};
           document.body.appendChild(c);
+          setTimeout(function(){
+            try{
+              var d=document.createElement('script');
+              d.src='delivery-admin-dedupe-v1.js?v=1';
+              d.async=true;
+              d.onerror=function(){console.warn('Admin dedupe failed to load')};
+              document.body.appendChild(d);
+            }catch(e){console.warn('Admin dedupe loader',e)}
+          },600);
         }catch(e){console.warn('Dine-in customer V11 loader',e)}
       },900);
     }catch(e){console.warn('Delivery V7 loader',e)}
