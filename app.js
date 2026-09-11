@@ -123,11 +123,8 @@ async function sendOrder(table){
   let proofUrl=null;
   const msgBase=()=>`طلب جديد من ${store.restaurant.name}\n${table?'الطاولة: '+table:'طلب خارجي / توصيل'}\nالاسم: ${name}\n${customerPhone?'رقم الهاتف: '+customerPhone+'\n':''}${addr?'العنوان: '+addr+'\n':''}${pay?'الدفع: '+(pay==='vodafone'?'Vodafone Cash':'دفع عند الاستلام')+'\n':''}${transferPhone?'رقم التليفون المحوّل منه: '+transferPhone+'\n':''}${proofUrl?'صورة التحويل: '+proofUrl+'\n':''}\n${itemsText}\n\nالإجمالي: ${money(total)}`;
   try{
-    // Dine-in must never wait for Supabase. Open WhatsApp from the original tap immediately.
     if(table){
       const url=`https://wa.me/${waNumber}?text=${encodeURIComponent(msgBase())}`;
-      // Direct navigation preserves the real user gesture on Android Chrome.
-      // Do not wait for Supabase before opening WhatsApp.
       window.location.assign(url);
       return;
     }
@@ -185,8 +182,16 @@ async function saveProduct(id){
       const r=await db.rpc('owner_update_product',{p_id:id,p_name:data.name,p_description:data.description,p_price:data.price,p_image_url:data.image_url,p_category_id:data.category_id,p_available:data.available,p_sort_order:data.sort_order});
       if(r.error)throw r.error;
     }else{
+      const duplicateCheck=await db.from('products').select('id,name').eq('restaurant_id',data.restaurant_id);
+      if(duplicateCheck.error)throw duplicateCheck.error;
+      const normalizedName=data.name.toLowerCase();
+      const duplicate=(duplicateCheck.data||[]).some(p=>String(p.name||'').trim().toLowerCase()===normalizedName);
+      if(duplicate){toast('يوجد منتج بنفس الاسم بالفعل');return;}
       const r=await db.from('products').insert(data);
-      if(r.error)throw r.error;
+      if(r.error){
+        if(r.error.code==='23505'){toast('يوجد منتج بنفس الاسم بالفعل');return;}
+        throw r.error;
+      }
     }
     await loadSupabase();
     const saved=id?store.products.find(x=>x.id===id):store.products.find(x=>x.name===data.name&&Number(x.price)===data.price);
