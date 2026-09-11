@@ -2,6 +2,8 @@
   'use strict';
   if(window.__ROS_DELIVERY_V7_FEATURES__) return;
   window.__ROS_DELIVERY_V7_FEATURES__=true;
+  try{if(!('db' in window))Object.defineProperty(window,'db',{configurable:true,get:()=>db});}catch(_){}
+  try{if(!('store' in window))Object.defineProperty(window,'store',{configurable:true,get:()=>store});}catch(_){}
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const esc=v=>typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const money=v=>typeof window.money==='function'?window.money(v):`${Number(v||0).toFixed(0)} جنيه`;
