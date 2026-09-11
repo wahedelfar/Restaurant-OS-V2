@@ -1,1 +1,16 @@
-{"version":2,"cleanUrls":true,"headers":[{"source":"/(.*)","headers":[{"key":"Cache-Control","value":"no-cache"}]}]}
+{
+  "version": 2,
+  "cleanUrls": true,
+  "alias": ["ros-v1.vercel.app"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ]
+}
