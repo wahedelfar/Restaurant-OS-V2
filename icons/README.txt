@@ -1,0 +1,1 @@
+PWA icons generated from the supplied Restaurant OS pizza artwork.
