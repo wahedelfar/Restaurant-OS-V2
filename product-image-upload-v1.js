@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__ROS_PRODUCT_IMAGE_UPLOAD_V2__) return;
-  window.__ROS_PRODUCT_IMAGE_UPLOAD_V2__=true;
+  if(window.__ROS_PRODUCT_IMAGE_UPLOAD_V3__) return;
+  window.__ROS_PRODUCT_IMAGE_UPLOAD_V3__=true;
 
   const MAX_WIDTH=1200;
   const QUALITY=.82;
@@ -12,7 +12,7 @@
     try{
       if(typeof store!=='undefined'){
         const id=String(store?.restaurant?.id||'').trim();
-        if(UUID_RE.test(id)) return id;
+        if(UUID_RE.test(id))return id;
       }
     }catch(_){ }
     throw new Error('تعذر تحديد معرف المطعم الصحيح');
@@ -20,7 +20,7 @@
 
   function getDb(){
     try{
-      if(typeof db!=='undefined' && db)return db;
+      if(typeof db!=='undefined'&&db)return db;
     }catch(_){ }
     throw new Error('اتصال Supabase غير متاح');
   }
@@ -37,6 +37,13 @@
     if(!wrap)return;
     wrap.innerHTML=src?'<img src="'+String(src).replace(/"/g,'&quot;')+'" alt="معاينة الصورة" style="width:100%;height:180px;object-fit:cover;border-radius:16px;display:block">':'';
     wrap.style.display=src?'block':'none';
+  }
+
+  function previewLocal(file){
+    if(!file||!file.type.startsWith('image/'))return;
+    const reader=new FileReader();
+    reader.onload=()=>showPreview(reader.result);
+    reader.readAsDataURL(file);
   }
 
   function compressImage(file){
@@ -116,24 +123,16 @@
 
     if(currentUrl)showPreview(currentUrl);
 
-    file.addEventListener('change',async function(){
+    file.addEventListener('change',function(){
       const selected=this.files?.[0];
       if(!selected)return;
-      setStatus('جاري تجهيز الصورة...',true);
-      try{
-        const result=await uploadProductImage(selected);
-        old.value=result.url;
-        old.setAttribute('data-image-path',result.path);
-        showPreview(result.url);
-        setStatus('تم رفع الصورة بنجاح',false);
-      }catch(err){
-        console.error('product image upload',err);
+      if(!selected.type.startsWith('image/')){
         this.value='';
-        old.value=currentUrl;
-        old.removeAttribute('data-image-path');
-        showPreview(old.value);
-        setStatus('تعذر رفع الصورة: '+(err?.message||'خطأ غير معروف'),false);
+        setStatus('اختر صورة صالحة',false);
+        return;
       }
+      previewLocal(selected);
+      setStatus('تم اختيار الصورة — اضغط حفظ لرفعها',false);
     });
   }
 
@@ -157,15 +156,15 @@
         if(file){
           const btn=document.querySelector('#saveProductBtn');
           if(btn){btn.disabled=true;btn.textContent='جاري رفع الصورة...';btn.style.opacity='.65'}
+          setStatus('جاري ضغط ورفع الصورة...',true);
           try{
             const result=await uploadProductImage(file);
             const url=document.querySelector('#pi');
             if(url){url.value=result.url;url.setAttribute('data-image-path',result.path)}
             const input=document.querySelector('#piFile');
-            if(input)input.dataset.uploadedUrl=result.url;
+            if(input){input.dataset.uploadedUrl=result.url;try{input.value=''}catch(_){} }
             showPreview(result.url);
             setStatus('تم رفع الصورة بنجاح',false);
-            if(input){try{input.value=''}catch(_){} }
           }catch(err){
             console.error('product image upload before save',err);
             setStatus('تعذر رفع الصورة: '+(err?.message||'خطأ غير معروف'),false);
