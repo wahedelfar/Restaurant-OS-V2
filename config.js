@@ -3,7 +3,7 @@ window.APP_CONFIG = {
   supabaseUrl: 'https://znnnkoujfuweydvbkejh.supabase.co',
   supabaseAnonKey: 'sb_publishable_gjYA4-E-BL0X1hc3YugqyQ_1VaOo_se',
   restaurantSlug: 'pizza-burger',
-  publicAppUrl: 'https://restaurant-os-multi.vercel.app',
+  publicAppUrl: 'https://ros-v10.vercel.app',
   currency: 'جنيه',
   defaultTheme: '#111111',
   demoRestaurant: {
