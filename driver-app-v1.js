@@ -2,6 +2,20 @@
   'use strict';
   if(window.__ROS_DRIVER_APP_V2__) return;
   window.__ROS_DRIVER_APP_V2__=true;
+
+  // Route every legacy driver_get_orders call to the repaired RPC.
+  // This prevents the old delivery renderer from hitting the broken DB function.
+  try{
+    if(window.db && typeof window.db.rpc==='function' && !window.__ROS_DRIVER_RPC_BRIDGE__){
+      const rpc=window.db.rpc.bind(window.db);
+      window.db.rpc=function(name,args){
+        if(name==='driver_get_orders') name='driver_get_orders_v2';
+        return rpc(name,args);
+      };
+      window.__ROS_DRIVER_RPC_BRIDGE__=true;
+    }
+  }catch(_){ }
+
   const isDriver=()=>String(location.hash||'').startsWith('#driver/');
   const token=()=>decodeURIComponent(String(location.hash||'').split('/')[1]||'');
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -15,11 +29,10 @@
     app.innerHTML=`<main class="min-h-screen luxury-page p-4"><div class="max-w-3xl mx-auto pt-6"><div class="lux-card rounded-3xl p-5"><div class="flex justify-between items-center gap-3"><div><div class="eyebrow">DRIVER APP</div><h1 class="text-2xl font-extrabold">لوحة المندوب</h1></div><button id="driverBack" type="button" class="rounded-xl border px-4 py-2">العودة للقائمة</button></div><div id="driverBox" class="mt-6">جارٍ تحميل بيانات المندوب...</div></div></div></main>`;
     document.querySelector('#driverBack')?.addEventListener('click',setMenu);
     const ok=await waitReady();const box=document.querySelector('#driverBox');if(!box||!ok)return;
-    // Canonical RPC. The old driver_get_orders_final function referenced the wrong table alias.
-    const r=await db.rpc('driver_get_orders',{p_token:t});
+    const r=await db.rpc('driver_get_orders_v2',{p_token:t});
     if(r.error){box.innerHTML=`<div class="rounded-2xl p-4 bg-red-500/10"><div class="font-extrabold">تعذر تحميل طلبات المندوب</div><div class="mt-2 text-sm" dir="ltr">${esc(r.error.message||'Unknown error')}</div></div>`;return}
     const rows=Array.isArray(r.data)?r.data:[];if(!rows.length){box.innerHTML='<div class="rounded-2xl p-5" style="background:var(--surface2)">لا توجد طلبات مسندة لهذا المندوب.</div>';return}
-    const renderRow=o=>`<article class="rounded-2xl p-4" style="background:var(--surface2)"><div class="flex justify-between gap-3"><div><div class="font-extrabold">طلب #${esc(String(o.id||'').slice(0,8))}</div><div class="text-sm mt-1">${esc(o.customer_name||'عميل')} • ${esc(o.customer_phone||'')}</div></div><div class="font-extrabold">${money(o.total)}</div></div><div class="mt-3 text-sm">${esc(o.address||'—')}</div><div class="mt-3 font-bold">الحالة: ${label(o.delivery_status||o.status)}</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4"><button data-status="accepted" data-id="${esc(o.id)}" class="driver-status rounded-xl border py-2 text-xs font-extrabold">قبول</button><button data-status="picked_up" data-id="${esc(o.id)}" class="driver-status rounded-xl border py-2 text-xs font-extrabold">استلام</button><button data-status="out_for_delivery" data-id="${esc(o.id)}" class="driver-status rounded-xl border py-2 text-xs font-extrabold">خرج للتوصيل</button><button data-status="delivered" data-id="${esc(o.id)}" class="driver-status rounded-xl border py-2 text-xs font-extrabold">تم التسليم</button></div><button data-gps="${esc(o.id)}" class="driver-gps mt-3 w-full rounded-xl border py-2 font-extrabold">تشغيل GPS</button>${o.driver_latitude!=null?`<div class="mt-3 text-xs" style="color:var(--muted)">آخر موقع مرسل: ${Number(o.driver_latitude).toFixed(6)}, ${Number(o.driver_longitude).toFixed(6)}</div>`:'<div class="mt-3 text-xs" style="color:var(--muted)">آخر موقع مرسل: غير متاح</div>'}</article>`;
+    const renderRow=o=>`<article class="rounded-2xl p-4" style="background:var(--surface2)"><div class="flex justify-between gap-3"><div><div class="font-extrabold">طلب #${esc(String(o.id||'').slice(0,8))}</div><div class="text-sm mt-1">${esc(o.customer_name||'عميل')} • ${esc(o.customer_phone||'')}</div></div><div class="font-extrabold">${money(o.total)}</div></div><div class="mt-3 text-sm">${esc(o.address||'—')}</div><div class="mt-3 font-bold">الحالة: ${label(o.delivery_status||o.status)}</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4"><button data-status="accepted" data-id="${esc(o.id)}" class="driver-status rounded-xl border py-2 text-xs font-extrabold">قبول</button><button data-status="picked_up" data-id="${esc(o.id)}" class="driver-status rounded-xl border py-2 text-xs font-extrabold">استلام</button><button data-status="out_for_delivery" data-id="${esc(o.id)}" class="driver-status rounded-xl border py-2 text-xs font-extrabold">خرج للتوصيل</button><button data-status="delivered" data-id="${esc(o.id)}" class="driver-status rounded-xl border py-2 text-xs font-extrabold">تم التسليم</button></div><button data-gps="${esc(o.id)}" class="driver-gps mt-3 w-full rounded-xl border py-2 font-extrabold">تشغيل GPS</button>${o.customer_lat!=null&&o.customer_lng!=null?`<a target="_blank" rel="noopener" href="https://www.google.com/maps?q=${o.customer_lat},${o.customer_lng}" class="block mt-3 w-full rounded-xl border py-2 font-extrabold text-center">موقع العميل</a>`:''}${o.driver_latitude!=null?`<div class="mt-3 text-xs" style="color:var(--muted)">آخر موقع مرسل: ${Number(o.driver_latitude).toFixed(6)}, ${Number(o.driver_longitude).toFixed(6)}</div>`:'<div class="mt-3 text-xs" style="color:var(--muted)">آخر موقع مرسل: غير متاح</div>'}</article>`;
     box.innerHTML=`<div class="space-y-4">${rows.map(renderRow).join('')}</div>`;
     box.querySelectorAll('.driver-status').forEach(b=>b.addEventListener('click',async()=>{b.disabled=true;const x=await db.rpc('driver_update_status',{p_token:t,p_order_id:b.dataset.id,p_status:b.dataset.status});if(x.error)alert(x.error.message||'تعذر تحديث الحالة');else await render()}));
     box.querySelectorAll('.driver-gps').forEach(b=>b.addEventListener('click',()=>startGps(t,b.dataset.gps,b)));
