@@ -17,4 +17,18 @@
       window.__ROS_DRIVER_RPC_BRIDGE__=true;
     }
   }catch(_){ }
+
+  // Load the final delivery repair layer after the base scripts have initialized.
+  // This keeps the original files intact while fixing GPS/tracking/dine-in behavior.
+  function loadFixes(){
+    if(window.__ROS_DELIVERY_FIXES_LOADER__)return;
+    window.__ROS_DELIVERY_FIXES_LOADER__=true;
+    const s=document.createElement('script');
+    s.src='delivery-fixes-v5.js?v=1';
+    s.async=true;
+    s.onerror=e=>console.warn('Delivery fixes failed to load',e);
+    document.body.appendChild(s);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(loadFixes,900),{once:true});
+  else setTimeout(loadFixes,900);
 })();
