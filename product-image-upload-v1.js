@@ -1,70 +1,47 @@
 (function(){
   'use strict';
-  if(window.__ROS_PRODUCT_IMAGE_UPLOAD_V1__) return;
-  window.__ROS_PRODUCT_IMAGE_UPLOAD_V1__=true;
+  if(window.__ROS_PRODUCT_IMAGE_UPLOAD_V2__) return;
+  window.__ROS_PRODUCT_IMAGE_UPLOAD_V2__=true;
 
-  const MAX_WIDTH=800;
-  const QUALITY=.7;
+  const MAX_WIDTH=1200;
+  const QUALITY=.82;
   const BUCKET='product-images';
   const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  function localRestaurantId(){
+  function restaurantId(){
     try{
       if(typeof store!=='undefined'){
-        const id=store?.restaurant?.id;
-        if(id && UUID_RE.test(String(id))) return String(id);
+        const id=String(store?.restaurant?.id||'').trim();
+        if(UUID_RE.test(id)) return id;
       }
     }catch(_){ }
-    return null;
-  }
-
-  async function getRestaurantId(){
-    const localId=localRestaurantId();
-    if(localId)return localId;
-
-    if(typeof db==='undefined' || !db)throw new Error('اتصال Supabase غير متاح');
-    const slug=String((window.APP_CONFIG&&APP_CONFIG.restaurantSlug)||'').trim();
-    if(slug){
-      const q=await db.from('restaurants').select('id').eq('slug',slug).maybeSingle();
-      if(q.error)throw q.error;
-      if(q.data?.id && UUID_RE.test(String(q.data.id)))return String(q.data.id);
-    }
-
-    const name=typeof store!=='undefined'?String(store?.restaurant?.name||'').trim():'';
-    if(name){
-      const q=await db.from('restaurants').select('id').eq('name',name).maybeSingle();
-      if(q.error)throw q.error;
-      if(q.data?.id && UUID_RE.test(String(q.data.id)))return String(q.data.id);
-    }
-
     throw new Error('تعذر تحديد معرف المطعم الصحيح');
   }
 
-  function setStatus(text, busy){
+  function getDb(){
+    try{
+      if(typeof db!=='undefined' && db)return db;
+    }catch(_){ }
+    throw new Error('اتصال Supabase غير متاح');
+  }
+
+  function setStatus(text,busy){
     const el=document.querySelector('#productImageStatus');
     const btn=document.querySelector('#saveProductBtn');
-    if(el){
-      el.textContent=text||'';
-      el.style.display=text?'block':'none';
-    }
-    if(btn){
-      btn.disabled=!!busy;
-      btn.style.opacity=busy?'.65':'';
-    }
+    if(el){el.textContent=text||'';el.style.display=text?'block':'none'}
+    if(btn){btn.disabled=!!busy;btn.style.opacity=busy?'.65':''}
   }
 
   function showPreview(src){
     const wrap=document.querySelector('#productImagePreview');
     if(!wrap)return;
-    wrap.innerHTML=src
-      ? '<img src="'+String(src).replace(/"/g,'&quot;')+'" alt="معاينة الصورة" style="width:100%;height:180px;object-fit:cover;border-radius:16px;display:block">'
-      : '';
+    wrap.innerHTML=src?'<img src="'+String(src).replace(/"/g,'&quot;')+'" alt="معاينة الصورة" style="width:100%;height:180px;object-fit:cover;border-radius:16px;display:block">':'';
     wrap.style.display=src?'block':'none';
   }
 
   function compressImage(file){
     return new Promise((resolve,reject)=>{
-      if(!file || !file.type.startsWith('image/'))return reject(new Error('اختر صورة صالحة'));
+      if(!file||!file.type.startsWith('image/'))return reject(new Error('اختر صورة صالحة'));
       const reader=new FileReader();
       reader.onerror=()=>reject(new Error('تعذر قراءة الصورة'));
       reader.onload=()=>{
@@ -75,13 +52,12 @@
           const width=Math.max(1,Math.round(img.width*scale));
           const height=Math.max(1,Math.round(img.height*scale));
           const canvas=document.createElement('canvas');
-          canvas.width=width;
-          canvas.height=height;
-          const ctx=canvas.getContext('2d',{alpha:true});
-          if(!ctx)return reject(new Error('المتصفح لا يدعم ضغط الصور'));
+          canvas.width=width;canvas.height=height;
+          const ctx=canvas.getContext('2d');
+          if(!ctx)return reject(new Error('المتصفح لا يدعم معالجة الصور'));
           ctx.drawImage(img,0,0,width,height);
           canvas.toBlob(blob=>{
-            if(!blob)return reject(new Error('تعذر ضغط الصورة'));
+            if(!blob)return reject(new Error('تعذر تجهيز الصورة'));
             resolve(blob);
           },'image/webp',QUALITY);
         };
@@ -92,27 +68,29 @@
   }
 
   async function uploadProductImage(file){
-    if(typeof db==='undefined' || !db)throw new Error('اتصال Supabase غير متاح');
-    const restaurantId=await getRestaurantId();
-    if(!UUID_RE.test(restaurantId))throw new Error('معرف المطعم غير صالح');
-    const compressed=await compressImage(file);
-    const path=restaurantId+'/'+crypto.randomUUID()+'.webp';
-    const up=await db.storage.from(BUCKET).upload(path,compressed,{
+    const client=getDb();
+    const id=restaurantId();
+    const blob=await compressImage(file);
+    const path=id+'/'+crypto.randomUUID()+'.webp';
+    const result=await client.storage.from(BUCKET).upload(path,blob,{
       contentType:'image/webp',
       cacheControl:'31536000',
       upsert:false
     });
-    if(up.error)throw up.error;
-    const pub=db.storage.from(BUCKET).getPublicUrl(path);
-    const url=pub?.data?.publicUrl;
-    if(!url)throw new Error('تعذر الحصول على رابط الصورة');
-    return {url,size:compressed.size,path};
+    if(result.error)throw result.error;
+    const publicResult=client.storage.from(BUCKET).getPublicUrl(path);
+    const url=publicResult?.data?.publicUrl;
+    if(!url)throw new Error('تعذر الحصول على رابط الصورة بعد الرفع');
+    return {url,path,size:blob.size};
   }
 
   function enhanceImageField(){
     const old=document.querySelector('#pi');
     if(!old)return;
-    if(document.querySelector('#piFile'))return;
+    if(document.querySelector('#piFile')){
+      if(old.type!=='hidden')old.type='hidden';
+      return;
+    }
 
     const currentUrl=old.value||'';
     old.type='hidden';
@@ -141,36 +119,78 @@
     file.addEventListener('change',async function(){
       const selected=this.files?.[0];
       if(!selected)return;
-      if(!selected.type.startsWith('image/')){
-        this.value='';
-        setStatus('اختر صورة صالحة',false);
-        return;
-      }
-      setStatus('جاري ضغط ورفع الصورة...',true);
+      setStatus('جاري تجهيز الصورة...',true);
       try{
         const result=await uploadProductImage(selected);
         old.value=result.url;
+        old.setAttribute('data-image-path',result.path);
         showPreview(result.url);
-        setStatus('',false);
+        setStatus('تم رفع الصورة بنجاح',false);
       }catch(err){
         console.error('product image upload',err);
-        old.value=currentUrl;
         this.value='';
+        old.value=currentUrl;
+        old.removeAttribute('data-image-path');
         showPreview(old.value);
         setStatus('تعذر رفع الصورة: '+(err?.message||'خطأ غير معروف'),false);
       }
     });
   }
 
-  const originalProductForm=window.productForm;
-  if(typeof originalProductForm==='function'){
+  function wrapProductForm(){
+    if(typeof window.productForm!=='function'||window.__ROS_PRODUCT_FORM_UPLOAD_WRAPPED__)return;
+    const original=window.productForm;
     window.productForm=function(id){
-      const result=originalProductForm.apply(this,arguments);
+      const result=original.apply(this,arguments);
       setTimeout(enhanceImageField,0);
       return result;
     };
+    window.__ROS_PRODUCT_FORM_UPLOAD_WRAPPED__=true;
   }
 
-  new MutationObserver(()=>enhanceImageField()).observe(document.body,{childList:true,subtree:true});
-  setTimeout(enhanceImageField,50);
+  function wrapSaveProduct(){
+    try{
+      if(typeof saveProduct!=='function'||window.__ROS_SAVE_PRODUCT_UPLOAD_WRAPPED__)return;
+      const original=saveProduct;
+      saveProduct=async function(id){
+        const file=document.querySelector('#piFile')?.files?.[0]||null;
+        if(file){
+          const btn=document.querySelector('#saveProductBtn');
+          if(btn){btn.disabled=true;btn.textContent='جاري رفع الصورة...';btn.style.opacity='.65'}
+          try{
+            const result=await uploadProductImage(file);
+            const url=document.querySelector('#pi');
+            if(url){url.value=result.url;url.setAttribute('data-image-path',result.path)}
+            const input=document.querySelector('#piFile');
+            if(input)input.dataset.uploadedUrl=result.url;
+            showPreview(result.url);
+            setStatus('تم رفع الصورة بنجاح',false);
+            if(input){try{input.value=''}catch(_){} }
+          }catch(err){
+            console.error('product image upload before save',err);
+            setStatus('تعذر رفع الصورة: '+(err?.message||'خطأ غير معروف'),false);
+            const btn2=document.querySelector('#saveProductBtn');
+            if(btn2){btn2.disabled=false;btn2.textContent=id?'حفظ التعديل':'حفظ';btn2.style.opacity=''}
+            return;
+          }
+        }
+        return original(id);
+      };
+      window.__ROS_SAVE_PRODUCT_UPLOAD_WRAPPED__=true;
+    }catch(err){console.warn('saveProduct wrapper',err)}
+  }
+
+  function boot(){
+    wrapProductForm();
+    wrapSaveProduct();
+    enhanceImageField();
+  }
+
+  boot();
+  let tries=0;
+  const timer=setInterval(()=>{
+    boot();
+    if(++tries>80)clearInterval(timer);
+  },100);
+  new MutationObserver(()=>boot()).observe(document.body,{childList:true,subtree:true});
 })();
