@@ -22,6 +22,7 @@
 <div id="toast"></div>
 <script src="config.js?v=3"></script>
 <script src="app.js?v=10"></script>
+<script src="dine-in-admin-guard-v2.js?v=1"></script>
 <script src="cart-bridge.js?v=3"></script>
 <script src="delivery-gps-clean-v2.js?v=3"></script>
 <script src="delivery-admin-enhancements.js?v=2"></script>
@@ -29,7 +30,6 @@
 <script src="driver-app-v1.js?v=3"></script>
 <script src="driver-fix-v3.js?v=1"></script>
 <script src="pwa-install.js?v=10"></script>
-<script src="dine-in-v10-fix.js?v=1"></script>
 <script>
 window.addEventListener('load',function(){
   setTimeout(function(){
@@ -46,15 +46,6 @@ window.addEventListener('load',function(){
           c.async=true;
           c.onerror=function(){console.warn('Dine-in customer V11 failed to load')};
           document.body.appendChild(c);
-          setTimeout(function(){
-            try{
-              var d=document.createElement('script');
-              d.src='delivery-admin-dedupe-v1.js?v=1';
-              d.async=true;
-              d.onerror=function(){console.warn('Admin dedupe failed to load')};
-              document.body.appendChild(d);
-            }catch(e){console.warn('Admin dedupe loader',e)}
-          },600);
         }catch(e){console.warn('Dine-in customer V11 loader',e)}
       },900);
     }catch(e){console.warn('Delivery V7 loader',e)}
