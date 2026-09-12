@@ -1,18 +1,30 @@
 (function(){
 'use strict';
-if(window.__ROS_DELIVERY_NAV_FIX_V3__)return;
-window.__ROS_DELIVERY_NAV_FIX_V3__=true;
+if(window.__ROS_DELIVERY_NAV_FIX_V4__)return;
+window.__ROS_DELIVERY_NAV_FIX_V4__=true;
 
 const DRIVER_SAVE_KEY='ros_driver_saved_token_v1';
 const DRIVER_BOOT_KEY='ros_driver_boot_routed_v1';
+const ADMIN_SAVE_KEY='ros_admin_save_hint_v1';
 function text(el){return String(el?.textContent||'').replace(/\s+/g,' ').trim()}
+function path(){return String(location.pathname||'').replace(/\\/+$/,'')||'/'}
+function isAdminEntry(){return path()==='/admin'||path()==='/admin/index.html'}
 function isTrack(){const h=String(location.hash||'');return /^#track\//i.test(h)||/^#dine-track\//i.test(h)}
 function isDriver(){return /^#driver\//i.test(String(location.hash||''))}
 function isAdmin(){const h=String(location.hash||'');return h==='#admin'||h.startsWith('#admin/')}
 function driverToken(){const h=String(location.hash||'');if(!/^#driver\//i.test(h))return '';const raw=h.slice(h.indexOf('/')+1).split(/[?#]/)[0];try{return decodeURIComponent(raw)}catch(_){return raw}}
 function rememberDriver(){const token=driverToken();if(token)try{localStorage.setItem(DRIVER_SAVE_KEY,token)}catch(_){}return token}
 
+function enforceAdminIsolation(){
+  if(isAdmin()&&!isAdminEntry()){
+    location.hash='#menu';
+    return true;
+  }
+  return false;
+}
+
 function restoreSavedDriver(){
+  if(enforceAdminIsolation())return;
   if(!isDriver()){
     let token='';try{token=localStorage.getItem(DRIVER_SAVE_KEY)||''}catch(_){}
     const h=String(location.hash||'');
@@ -26,77 +38,71 @@ function restoreSavedDriver(){
   }
 }
 
-function saveDialog(){
+function saveDriverDialog(){
   rememberDriver();
   let d=document.getElementById('ros-driver-save-help');
   if(!d){
-    d=document.createElement('div');
-    d.id='ros-driver-save-help';
+    d=document.createElement('div');d.id='ros-driver-save-help';
     d.innerHTML='<div class="ros-save-box"><div class="ros-save-title">احفظ صفحتك على موبايلك</div><div class="ros-save-text"></div><button type="button" class="ros-save-close">حسنًا</button></div>';
-    document.body.appendChild(d);
-    d.addEventListener('click',e=>{if(e.target===d)d.classList.remove('show')});
-    d.querySelector('.ros-save-close').addEventListener('click',()=>d.classList.remove('show'));
+    document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d)d.classList.remove('show')});d.querySelector('.ros-save-close').addEventListener('click',()=>d.classList.remove('show'));
   }
-  const ua=navigator.userAgent||'';
-  let msg='تم تجهيز صفحة هذا المندوب. عند اختيار «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق»، سيفتح الاختصار مباشرة على لوحة هذا المندوب وليس على المنيو.';
-  if(/iphone|ipad|ipod/i.test(ua)){
-    msg+=' في Safari اضغط زر المشاركة ثم اختر «إضافة إلى الشاشة الرئيسية».';
-  }else if(/android/i.test(ua)){
-    msg+=' في Chrome اضغط ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».';
-  }else if(/edg/i.test(ua)){
-    msg+=' في Edge اختر تثبيت التطبيق/إنشاء اختصار من قائمة المتصفح.';
-  }else if(/chrome|crios/i.test(ua)){
-    msg+=' في Chrome اختر «إنشاء اختصار» أو «تثبيت التطبيق» من القائمة.';
-  }else{
-    msg+=' استخدم خيار إنشاء اختصار أو إضافة الصفحة إلى الشاشة الرئيسية من قائمة المتصفح.';
+  const ua=navigator.userAgent||'';let msg='تم تجهيز صفحة هذا المندوب. عند اختيار «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق»، سيفتح الاختصار مباشرة على لوحة هذا المندوب وليس على المنيو.';
+  if(/iphone|ipad|ipod/i.test(ua))msg+=' في Safari اضغط زر المشاركة ثم اختر «إضافة إلى الشاشة الرئيسية».';
+  else if(/android/i.test(ua))msg+=' في Chrome اضغط ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».';
+  else if(/edg/i.test(ua))msg+=' في Edge اختر تثبيت التطبيق/إنشاء اختصار من قائمة المتصفح.';
+  else if(/chrome|crios/i.test(ua))msg+=' في Chrome اختر «إنشاء اختصار» أو «تثبيت التطبيق» من القائمة.';
+  else msg+=' استخدم خيار إنشاء اختصار أو إضافة الصفحة إلى الشاشة الرئيسية من قائمة المتصفح.';
+  d.querySelector('.ros-save-text').textContent=msg;d.classList.add('show');
+}
+
+function saveAdminDialog(){
+  let d=document.getElementById('ros-admin-save-help');
+  if(!d){
+    d=document.createElement('div');d.id='ros-admin-save-help';
+    d.innerHTML='<div class="ros-save-box"><div class="ros-save-title">احفظ لوحة الإدارة</div><div class="ros-save-text"></div><button type="button" class="ros-save-close">حسنًا</button></div>';
+    document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d)d.classList.remove('show')});d.querySelector('.ros-save-close').addEventListener('click',()=>d.classList.remove('show'));
   }
-  d.querySelector('.ros-save-text').textContent=msg;
-  d.classList.add('show');
+  const ua=navigator.userAgent||'';let msg='هذه لوحة إدارة مستقلة. عند اختيار «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق»، سيتم إنشاء أيقونة مستقلة للوحة الإدارة تفتح مباشرة هنا.';
+  if(/iphone|ipad|ipod/i.test(ua))msg+=' في Safari اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».';
+  else if(/android/i.test(ua))msg+=' في Chrome اضغط ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».';
+  else msg+=' من قائمة المتصفح اختر «تثبيت التطبيق» أو «إنشاء اختصار»."';
+  d.querySelector('.ros-save-text').textContent=msg;d.classList.add('show');
 }
 
 function style(){
-  if(document.getElementById('ros-driver-save-style'))return;
-  const s=document.createElement('style');s.id='ros-driver-save-style';
-  s.textContent='#ros-driver-save-help{position:fixed;inset:0;z-index:130;display:none;place-items:center;padding:18px;background:#000c;backdrop-filter:blur(8px)}#ros-driver-save-help.show{display:grid}#ros-driver-save-help .ros-save-box{width:min(430px,100%);padding:24px;text-align:center;color:var(--text,#fff);background:linear-gradient(145deg,var(--surface,#17191d),var(--surface2,#202329));border:1px solid color-mix(in srgb,var(--brand,#D4AF37) 60%,transparent);border-radius:26px;box-shadow:0 25px 80px #000b}.ros-save-title{font-size:22px;font-weight:900;margin-bottom:12px;color:var(--brand,#D4AF37)}.ros-save-text{line-height:1.9;color:var(--text,#fff)}.ros-save-close{margin-top:18px;padding:11px 28px;border:0;border-radius:14px;background:var(--brand,#D4AF37);color:#111;font-weight:900}'
+  if(document.getElementById('ros-nav-save-style'))return;
+  const s=document.createElement('style');s.id='ros-nav-save-style';
+  s.textContent='#ros-driver-save-help,#ros-admin-save-help{position:fixed;inset:0;z-index:130;display:none;place-items:center;padding:18px;background:#000c;backdrop-filter:blur(8px)}#ros-driver-save-help.show,#ros-admin-save-help.show{display:grid}.ros-save-box{width:min(430px,100%);padding:24px;text-align:center;color:var(--text,#fff);background:linear-gradient(145deg,var(--surface,#17191d),var(--surface2,#202329));border:1px solid color-mix(in srgb,var(--brand,#D4AF37) 60%,transparent);border-radius:26px;box-shadow:0 25px 80px #000b}.ros-save-title{font-size:22px;font-weight:900;margin-bottom:12px;color:var(--brand,#D4AF37)}.ros-save-text{line-height:1.9;color:var(--text,#fff)}.ros-save-close{margin-top:18px;padding:11px 28px;border:0;border-radius:14px;background:var(--brand,#D4AF37);color:#111;font-weight:900}.ros-admin-save-btn{border:0;cursor:pointer;padding:10px 14px;border-radius:12px;background:var(--brand,#D4AF37);color:#111;font-weight:900}
+';
   document.head.appendChild(s);
 }
 
 function replaceDriverExit(){
-  if(!isDriver())return;
-  rememberDriver();
+  if(!isDriver())return;rememberDriver();
   const buttons=[...document.querySelectorAll('button,a')].filter(el=>text(el)==='خروج');
-  for(const el of buttons){
-    if(el.dataset.rosSavePage==='1')continue;
-    el.dataset.rosSavePage='1';
-    if(el.tagName==='A')el.removeAttribute('href');
-    el.textContent='احفظ صفحتك على موبايلك';
-    el.title='احفظ صفحة المندوب على الشاشة الرئيسية أو سطح المكتب';
-    el.setAttribute('aria-label',el.title);
-    el.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();saveDialog()},true);
-  }
+  for(const el of buttons){if(el.dataset.rosSavePage==='1')continue;el.dataset.rosSavePage='1';if(el.tagName==='A')el.removeAttribute('href');el.textContent='احفظ صفحتك على موبايلك';el.title='احفظ صفحة المندوب على الشاشة الرئيسية أو سطح المكتب';el.setAttribute('aria-label',el.title);el.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();saveDriverDialog()},true)}
+}
+
+function injectAdminSave(){
+  if(!isAdmin()||!isAdminEntry())return;
+  const header=[...document.querySelectorAll('header')].find(x=>text(x).includes('Restaurant OS'))||document.querySelector('header');
+  if(!header||header.querySelector('[data-ros-admin-save="1"]'))return;
+  const logout=[...header.querySelectorAll('button,a')].find(el=>text(el)==='خروج');
+  const btn=document.createElement('button');btn.type='button';btn.dataset.rosAdminSave='1';btn.className='ros-admin-save-btn';btn.textContent='احفظ لوحة الإدارة';btn.title='تثبيت لوحة الإدارة على الهاتف أو سطح المكتب';btn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();saveAdminDialog()},true);
+  if(logout?.parentElement)logout.parentElement.insertBefore(btn,logout);else header.appendChild(btn);
 }
 
 document.addEventListener('click',function(e){
-  const el=e.target?.closest?.('button,a');
-  if(!el)return;
-  const t=text(el);
-  if(isAdmin()&&t==='فتح المينو'){
-    e.preventDefault();e.stopImmediatePropagation();location.hash='#menu';return;
-  }
-  if(isTrack()&&t==='القائمة'){
-    e.preventDefault();e.stopImmediatePropagation();location.hash='#menu';return;
-  }
-  if(isDriver()&&(t==='خروج'||el.dataset.rosSavePage==='1')){
-    e.preventDefault();e.stopImmediatePropagation();saveDialog();return;
-  }
+  const el=e.target?.closest?.('button,a');if(!el)return;const t=text(el);
+  if(isAdmin()&&isAdminEntry()&&t==='فتح المينو'){e.preventDefault();e.stopImmediatePropagation();location.hash='#menu';return}
+  if(isTrack()&&t==='القائمة'){e.preventDefault();e.stopImmediatePropagation();location.hash='#menu';return}
+  if(isDriver()&&(t==='خروج'||el.dataset.rosSavePage==='1')){e.preventDefault();e.stopImmediatePropagation();saveDriverDialog();return}
 },true);
 
-style();
-restoreSavedDriver();
-let obsTimer=0;
-function scan(){clearTimeout(obsTimer);obsTimer=setTimeout(replaceDriverExit,30)}
+style();restoreSavedDriver();
+let obsTimer=0;function scan(){clearTimeout(obsTimer);obsTimer=setTimeout(()=>{replaceDriverExit();injectAdminSave()},30)}
 new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
-replaceDriverExit();
-window.addEventListener('hashchange',()=>{restoreSavedDriver();setTimeout(replaceDriverExit,50)});
-window.addEventListener('load',restoreSavedDriver,{once:true});
+replaceDriverExit();injectAdminSave();
+window.addEventListener('hashchange',()=>{restoreSavedDriver();setTimeout(()=>{replaceDriverExit();injectAdminSave()},50)});
+window.addEventListener('load',()=>{restoreSavedDriver();injectAdminSave()},{once:true});
 })();
