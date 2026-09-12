@@ -28,8 +28,8 @@
     }
   }
 
-  // Do not intercept native select events. The assignment select is not inside a navigation link;
-  // intercepting pointer/click events can prevent the browser's native dropdown from opening.
+  // Assignment button only. Driver selection itself is isolated below so no page/router
+  // event can cancel or navigate away from the control.
   document.addEventListener('click',function(e){
     const button=e.target?.closest?.('#deliveryControlPanel [data-assign]');
     if(!button)return;
@@ -44,12 +44,73 @@
     assignDelivery(orderId,String(assignSelect.value||''),button,assignSelect,panel);
   },true);
 
+  function isolateSelect(select){
+    if(!select||select.dataset.rosIsolated==='1')return;
+    const options=[...select.options].map(o=>({value:String(o.value||''),text:o.textContent||''}));
+    const wrap=document.createElement('div');
+    wrap.className='relative flex-1 min-w-0';
+    wrap.dataset.rosDriverDropdown='1';
+    const trigger=document.createElement('button');
+    trigger.type='button';
+    trigger.className='w-full border p-3 rounded-xl text-right flex items-center justify-between gap-2';
+    trigger.style.cssText='background:var(--surface)!important;color:var(--text)!important;border-color:color-mix(in srgb,var(--text) 14%,transparent)!important;min-height:48px;';
+    trigger.dataset.rosDriverTrigger='1';
+    const label=document.createElement('span');
+    const arrow=document.createElement('span');
+    arrow.textContent='⌄';
+    arrow.setAttribute('aria-hidden','true');
+    trigger.append(label,arrow);
+    const menu=document.createElement('div');
+    menu.className='absolute right-0 left-0 mt-2 rounded-xl border shadow-xl overflow-hidden';
+    menu.style.cssText='display:none;z-index:80;background:var(--surface2);border-color:color-mix(in srgb,var(--text) 14%,transparent);';
+    menu.dataset.rosDriverMenu='1';
+
+    function sync(){
+      const current=options.find(o=>o.value===String(select.value||''));
+      label.textContent=current?.text||'اختر مندوبًا';
+      trigger.disabled=!!select.disabled;
+    }
+    options.forEach(o=>{
+      const item=document.createElement('button');
+      item.type='button';
+      item.className='block w-full p-3 text-right font-bold';
+      item.textContent=o.text;
+      item.dataset.value=o.value;
+      item.onclick=function(ev){
+        ev.preventDefault();ev.stopPropagation();
+        select.value=o.value;
+        select.dispatchEvent(new Event('change',{bubbles:true}));
+        menu.style.display='none';
+        sync();
+      };
+      menu.appendChild(item);
+    });
+    trigger.onclick=function(ev){
+      ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+      menu.style.display=menu.style.display==='none'?'block':'none';
+    };
+    wrap.append(trigger,menu);
+    select.dataset.rosIsolated='1';
+    select.style.display='none';
+    select.setAttribute('aria-hidden','true');
+    select.parentNode.insertBefore(wrap,select);
+    sync();
+  }
+
+  document.addEventListener('click',function(e){
+    document.querySelectorAll('[data-ros-driver-menu]').forEach(m=>{
+      const w=m.closest('[data-ros-driver-dropdown]');
+      if(w&&!w.contains(e.target))m.style.display='none';
+    });
+  },false);
+
   async function enhance(){
     if(typeof db==='undefined'||!db||!window.store?.restaurant?.id)return;
     const panel=document.querySelector('#deliveryControlPanel');
     if(!panel)return;
     const wrap=panel.querySelector('#rosDrivers');
     if(!wrap)return;
+    wrap.querySelectorAll('select[data-sel]').forEach(isolateSelect);
     const r=await db.from('drivers').select('id,name,phone,active,access_token').eq('restaurant_id',store.restaurant.id);
     if(r.error)return;
     const byToken=new Map((r.data||[]).map(d=>[String(d.access_token),d]));
