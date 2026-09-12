@@ -28,11 +28,21 @@
     }
   }
 
-  // Keep the native <select> completely untouched for pointer/mouse activation.
-  // Only stop the final click from reaching any parent navigation handler.
+  // Protect the select from parent navigation while preserving native dropdown activation.
+  document.addEventListener('pointerdown',function(e){
+    const select=e.target?.closest?.('#deliveryControlPanel select[data-sel]');
+    if(select)e.stopPropagation();
+  },true);
+  document.addEventListener('mousedown',function(e){
+    const select=e.target?.closest?.('#deliveryControlPanel select[data-sel]');
+    if(select)e.stopPropagation();
+  },true);
   document.addEventListener('click',function(e){
     const select=e.target?.closest?.('#deliveryControlPanel select[data-sel]');
     if(select){
+      // If a parent anchor/navigation handler exists, cancel its default action.
+      // Do not cancel pointerdown/mousedown: the browser must still open the native select.
+      e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
       return;
