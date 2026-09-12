@@ -16,50 +16,11 @@
       const d=byToken.get(token);
       if(!d)return;
       if(a.parentElement?.querySelector('[data-driver-toggle]'))return;
-
-      const b=document.createElement('button');
-      b.type='button';
-      b.dataset.driverToggle=d.id;
-      b.dataset.driverId=d.id;
-      b.dataset.driverActive=String(d.active);
-      b.textContent=d.active?'إيقاف المندوب':'تفعيل المندوب';
-      b.className='rounded-xl border px-4 py-2 font-bold';
-      b.setAttribute('data-driver-toggle','1');
-      b.onclick=async function(){
-        const active=this.dataset.driverActive!=='true';
-        this.disabled=true;
-        const rr=await db.rpc('admin_update_driver',{p_restaurant_id:store.restaurant.id,p_driver_id:this.dataset.driverId,p_active:active});
-        if(rr.error){this.disabled=false;return typeof toast==='function'&&toast(rr.error.message||'تعذر تعديل حالة المندوب')}
-        if(typeof toast==='function')toast(active?'تم تفعيل المندوب':'تم إيقاف المندوب');
-        const refresh=panel.querySelector('#rosRefresh');
-        if(refresh)refresh.click();
-      };
-      a.parentElement.appendChild(b);
-
-      const del=document.createElement('button');
-      del.type='button';
-      del.dataset.driverDelete=d.id;
-      del.textContent='حذف';
-      del.className='rounded-xl border border-red-500/40 px-4 py-2 font-bold text-red-400';
-      del.onclick=async function(){
-        const driverName=d.name||'هذا المندوب';
-        if(!confirm(`هل أنت متأكد من حذف ${driverName}؟\n\nلن يمكن التراجع عن هذا الإجراء.`))return;
-        this.disabled=true;
-        const rr=await db.rpc('admin_delete_driver',{p_driver_id:d.id});
-        if(rr.error){
-          this.disabled=false;
-          const msg=rr.error.message||'تعذر حذف المندوب';
-          return typeof toast==='function'&&toast(msg==='driver_has_active_delivery'?'لا يمكن حذف المندوب لأنه مرتبط بطلب دليفري نشط. أوقف الطلب أو أكمله أولاً.':msg);
-        }
-        if(typeof toast==='function')toast('تم حذف المندوب');
-        const refresh=panel.querySelector('#rosRefresh');
-        if(refresh)refresh.click();
-      };
-      a.parentElement.appendChild(del);
+      const b=document.createElement('button');b.type='button';b.dataset.driverToggle=d.id;b.dataset.driverId=d.id;b.dataset.driverActive=String(d.active);b.textContent=d.active?'إيقاف المندوب':'تفعيل المندوب';b.className='rounded-xl border px-4 py-2 font-bold';b.setAttribute('data-driver-toggle','1');
+      b.onclick=async function(){const active=this.dataset.driverActive!=='true';this.disabled=true;const rr=await db.rpc('admin_update_driver',{p_restaurant_id:store.restaurant.id,p_driver_id:this.dataset.driverId,p_active:active});if(rr.error){this.disabled=false;return typeof toast==='function'&&toast(rr.error.message||'تعذر تعديل حالة المندوب')}if(typeof toast==='function')toast(active?'تم تفعيل المندوب':'تم إيقاف المندوب');panel.querySelector('#rosRefresh')?.click()};a.parentElement.appendChild(b);
+      const del=document.createElement('button');del.type='button';del.dataset.driverDelete=d.id;del.textContent='حذف';del.className='rounded-xl border border-red-500/40 px-4 py-2 font-bold text-red-400';del.onclick=async function(){const driverName=d.name||'هذا المندوب';if(!confirm(`هل أنت متأكد من حذف ${driverName}؟\n\nلن يمكن التراجع عن هذا الإجراء.`))return;this.disabled=true;const rr=await db.rpc('admin_delete_driver',{p_driver_id:d.id});if(rr.error){this.disabled=false;const msg=rr.error.message||'تعذر حذف المندوب';return typeof toast==='function'&&toast(msg==='driver_has_active_delivery'?'لا يمكن حذف المندوب لأنه مرتبط بطلب دليفري نشط. أوقف الطلب أو أكمله أولاً.':msg)}if(typeof toast==='function')toast('تم حذف المندوب');panel.querySelector('#rosRefresh')?.click()};a.parentElement.appendChild(del);
     });
   }
-  let timer=0;
-  const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>enhance().catch(console.warn),120)};
-  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
-  schedule();
+  let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>enhance().catch(console.warn),120)};new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();
+  if(!window.__ROS_ADMIN_UX_LOADER__){window.__ROS_ADMIN_UX_LOADER__=true;const s=document.createElement('script');s.src='admin-ux-notifications-v1.js?v=1';s.defer=true;document.head.appendChild(s)}
 })();
