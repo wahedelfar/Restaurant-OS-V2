@@ -1,14 +1,33 @@
 (function(){
 'use strict';
-if(window.__ROS_DELIVERY_NAV_FIX_V2__)return;
-window.__ROS_DELIVERY_NAV_FIX_V2__=true;
+if(window.__ROS_DELIVERY_NAV_FIX_V3__)return;
+window.__ROS_DELIVERY_NAV_FIX_V3__=true;
 
+const DRIVER_SAVE_KEY='ros_driver_saved_token_v1';
+const DRIVER_BOOT_KEY='ros_driver_boot_routed_v1';
 function text(el){return String(el?.textContent||'').replace(/\s+/g,' ').trim()}
 function isTrack(){const h=String(location.hash||'');return /^#track\//i.test(h)||/^#dine-track\//i.test(h)}
 function isDriver(){return /^#driver\//i.test(String(location.hash||''))}
 function isAdmin(){const h=String(location.hash||'');return h==='#admin'||h.startsWith('#admin/')}
+function driverToken(){const h=String(location.hash||'');if(!/^#driver\//i.test(h))return '';const raw=h.slice(h.indexOf('/')+1).split(/[?#]/)[0];try{return decodeURIComponent(raw)}catch(_){return raw}}
+function rememberDriver(){const token=driverToken();if(token)try{localStorage.setItem(DRIVER_SAVE_KEY,token)}catch(_){}return token}
+
+function restoreSavedDriver(){
+  if(!isDriver()){
+    let token='';try{token=localStorage.getItem(DRIVER_SAVE_KEY)||''}catch(_){}
+    const h=String(location.hash||'');
+    if(token&&!h||token&&(h==='#menu'||h==='#')){
+      try{if(sessionStorage.getItem(DRIVER_BOOT_KEY)==='1')return;sessionStorage.setItem(DRIVER_BOOT_KEY,'1')}catch(_){}
+      location.hash='#driver/'+encodeURIComponent(token);
+    }
+  }else{
+    rememberDriver();
+    try{sessionStorage.setItem(DRIVER_BOOT_KEY,'1')}catch(_){}
+  }
+}
 
 function saveDialog(){
+  rememberDriver();
   let d=document.getElementById('ros-driver-save-help');
   if(!d){
     d=document.createElement('div');
@@ -19,17 +38,17 @@ function saveDialog(){
     d.querySelector('.ros-save-close').addEventListener('click',()=>d.classList.remove('show'));
   }
   const ua=navigator.userAgent||'';
-  let msg='';
+  let msg='تم تجهيز صفحة هذا المندوب. عند اختيار «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق»، سيفتح الاختصار مباشرة على لوحة هذا المندوب وليس على المنيو.';
   if(/iphone|ipad|ipod/i.test(ua)){
-    msg='في Safari اضغط زر المشاركة ثم اختر «إضافة إلى الشاشة الرئيسية». بهذه الطريقة تحفظ صفحة المندوب نفسها للوصول السريع.';
+    msg+=' في Safari اضغط زر المشاركة ثم اختر «إضافة إلى الشاشة الرئيسية».';
   }else if(/android/i.test(ua)){
-    msg='في Chrome اضغط ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «Add to Home screen». احفظ هذه الصفحة الحالية الخاصة بك كمندوب.';
+    msg+=' في Chrome اضغط ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».';
   }else if(/edg/i.test(ua)){
-    msg='من قائمة Edge اختر «Apps» ثم «Install this site as an app» إذا ظهر الخيار، أو احفظ الصفحة في المفضلة للوصول السريع.';
+    msg+=' في Edge اختر تثبيت التطبيق/إنشاء اختصار من قائمة المتصفح.';
   }else if(/chrome|crios/i.test(ua)){
-    msg='من قائمة Chrome اختر «Save and share» ثم «Create shortcut» لإنشاء اختصار مباشر لهذه الصفحة على سطح المكتب.';
+    msg+=' في Chrome اختر «إنشاء اختصار» أو «تثبيت التطبيق» من القائمة.';
   }else{
-    msg='استخدم قائمة المتصفح واختر «إضافة إلى الشاشة الرئيسية» أو «إنشاء اختصار» أو احفظ الصفحة في المفضلة، حسب المتصفح.';
+    msg+=' استخدم خيار إنشاء اختصار أو إضافة الصفحة إلى الشاشة الرئيسية من قائمة المتصفح.';
   }
   d.querySelector('.ros-save-text').textContent=msg;
   d.classList.add('show');
@@ -44,6 +63,7 @@ function style(){
 
 function replaceDriverExit(){
   if(!isDriver())return;
+  rememberDriver();
   const buttons=[...document.querySelectorAll('button,a')].filter(el=>text(el)==='خروج');
   for(const el of buttons){
     if(el.dataset.rosSavePage==='1')continue;
@@ -72,9 +92,11 @@ document.addEventListener('click',function(e){
 },true);
 
 style();
+restoreSavedDriver();
 let obsTimer=0;
 function scan(){clearTimeout(obsTimer);obsTimer=setTimeout(replaceDriverExit,30)}
 new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
 replaceDriverExit();
-window.addEventListener('hashchange',()=>setTimeout(replaceDriverExit,50));
+window.addEventListener('hashchange',()=>{restoreSavedDriver();setTimeout(replaceDriverExit,50)});
+window.addEventListener('load',restoreSavedDriver,{once:true});
 })();
