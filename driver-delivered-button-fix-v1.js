@@ -1,51 +1,49 @@
 (function(){
   'use strict';
-  if(window.__ROS_DRIVER_DELIVERED_BUTTON_FIX_V1__) return;
-  window.__ROS_DRIVER_DELIVERED_BUTTON_FIX_V1__=true;
+  if(window.__ROS_DRIVER_DELIVERED_BUTTON_FIX_V2__) return;
+  window.__ROS_DRIVER_DELIVERED_BUTTON_FIX_V2__=true;
 
   function isDriver(){return location.hash.startsWith('#driver/');}
 
-  function alreadyDelivered(button){
-    const article=button?.closest('#rosDriverBox article');
-    const badge=article?.querySelector('span');
-    return String(badge?.textContent||'').trim()==='تم التسليم';
+  function getStatus(article){
+    const badge=article?.querySelector('span.px-3.py-1');
+    return String(badge?.textContent||'').trim();
   }
-
-  document.addEventListener('click',function(event){
-    if(!isDriver()) return;
-    const button=event.target?.closest?.('#rosDriverBox article button');
-    if(!button) return;
-    if(String(button.textContent||'').trim()!=='تم التسليم') return;
-    if(!alreadyDelivered(button)) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    button.disabled=true;
-  },true);
 
   function enhance(){
     if(!isDriver()) return;
     document.querySelectorAll('#rosDriverBox article').forEach(article=>{
-      const badge=article.querySelector('span');
-      const delivered=String(badge?.textContent||'').trim()==='تم التسليم';
-      if(!delivered) return;
+      const state=getStatus(article);
+      const button=[...article.querySelectorAll('button')].find(btn=>String(btn.textContent||'').trim().startsWith('تم التسليم'));
+      if(!button)return;
 
-      article.querySelectorAll('button').forEach(btn=>{
-        if(String(btn.textContent||'').trim()!=='تم التسليم') return;
-        btn.disabled=true;
-        btn.removeAttribute('onclick');
-        btn.setAttribute('aria-disabled','true');
-        btn.textContent='تم التسليم ✓';
-        btn.style.opacity='0.6';
-        btn.style.cursor='default';
-      });
+      const terminal=state==='تم التسليم'||state==='ملغي';
+      const ready=state==='خرج للتوصيل';
+      const locked=terminal||!ready;
+
+      button.disabled=locked;
+      button.setAttribute('aria-disabled',String(locked));
+      button.style.opacity=locked?'0.55':'';
+      button.style.cursor=locked?'not-allowed':'';
+
+      if(terminal){
+        button.removeAttribute('onclick');
+        button.textContent='تم التسليم ✓';
+        button.title='تم تسليم الطلب بالفعل';
+      }else if(!ready){
+        button.title='يصبح زر التسليم متاحًا بعد اختيار «خرج للتوصيل»';
+      }else{
+        button.removeAttribute('title');
+      }
     });
   }
 
   const observer=new MutationObserver(()=>setTimeout(enhance,0));
-  const start=()=>{
-    if(document.body) observer.observe(document.body,{childList:true,subtree:true});
+  function start(){
+    if(document.body)observer.observe(document.body,{childList:true,subtree:true});
     enhance();
-  };
+  }
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
   window.addEventListener('hashchange',()=>setTimeout(enhance,50));
