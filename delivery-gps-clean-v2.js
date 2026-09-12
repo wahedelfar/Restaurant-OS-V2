@@ -7,7 +7,7 @@
   const originalRouter = window.renderRouter;
   const originalAdmin = window.renderAdmin;
   const publicBase = String((window.APP_CONFIG&&window.APP_CONFIG.publicAppUrl)||'').replace(/\/$/,'');
-  function esc(v){return typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function esc(v){return typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));}
   function money(v){return typeof window.money==='function'?window.money(v):`${Number(v||0).toFixed(0)} جنيه`;}
   function notify(m){try{typeof toast==='function'?toast(m):alert(m)}catch(_){alert(m)}}
   function base(){return publicBase||location.origin;}
@@ -85,6 +85,6 @@
   async function router(){const h=location.hash||'';if(/^#track\//.test(h))return loadTracking(decodeURIComponent(h.slice(7)));if(/^#driver\//.test(h))return loadDriver(decodeURIComponent(h.slice(8)));if(h==='#admin')return adminWrapper();return typeof originalRouter==='function'?originalRouter.apply(this,arguments):undefined}
   if(typeof originalRouter==='function')try{window.removeEventListener('hashchange',originalRouter)}catch(_){ }
   window.renderAdmin=adminWrapper;window.renderRouter=router;window.addEventListener('hashchange',router);
-  setTimeout(()=>{if(/^#(track|driver)\//.test(location.hash||''))router()},250);
-  setTimeout(()=>{if(/^#(track|driver)\//.test(location.hash||''))router()},1200);
+  setTimeout(()=>{if(/^#driver\//.test(location.hash||''))router()},250);
+  setTimeout(()=>{if(/^#driver\//.test(location.hash||''))router()},1200);
 })();
