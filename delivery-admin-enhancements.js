@@ -1,10 +1,9 @@
 (function(){
   'use strict';
   if(window.__ROS_DELIVERY_ADMIN_ENHANCEMENTS__) return;
-  window.__ROS_DELIVERY_ADMIN_ENHANCEMENTS__=true;
 
   async function assignDelivery(orderId,driverId,button,select,panel){
-    if(!window.db||!window.store?.restaurant?.id)return;
+    if(typeof db==='undefined'||!db||!window.store?.restaurant?.id)return;
     if(!driverId){if(typeof toast==='function')toast('اختر مندوبًا أولًا');return}
     button.disabled=true;
     select.disabled=true;
@@ -43,8 +42,9 @@
   },true);
 
   async function enhance(){
+    if(typeof db==='undefined'||!db||!window.store?.restaurant?.id)return;
     const panel=document.querySelector('#deliveryControlPanel');
-    if(!panel||!window.db||!window.store?.restaurant?.id)return;
+    if(!panel)return;
     const wrap=panel.querySelector('#rosDrivers');
     if(!wrap)return;
     const r=await db.from('drivers').select('id,name,phone,active,access_token').eq('restaurant_id',store.restaurant.id);
