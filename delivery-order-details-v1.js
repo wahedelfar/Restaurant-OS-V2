@@ -1,0 +1,31 @@
+(function(){
+'use strict';
+if(window.__ROS_DELIVERY_ORDER_DETAILS_V1__)return;
+window.__ROS_DELIVERY_ORDER_DETAILS_V1__=true;
+const POLL_MS=30000;
+let timer=0,token=null,lastRoute='';
+const esc=v=>typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
+const money=v=>typeof window.money==='function'?window.money(v):`${Number(v||0).toFixed(0)} جنيه`;
+function itemsHtml(items){
+  let arr=items;
+  if(typeof arr==='string')try{arr=JSON.parse(arr)}catch(_){arr=[]}
+  if(!Array.isArray(arr)||!arr.length)return '<div class="text-sm" style="color:var(--muted)">لا توجد تفاصيل منتجات.</div>';
+  return `<div class="space-y-2">${arr.map(x=>{const q=Number(x.quantity??x.qty??1),p=Number(x.price||0),n=esc(x.name||'منتج');return `<div class="flex items-center justify-between gap-3 rounded-xl p-3" style="background:var(--surface)"><div class="min-w-0"><div class="font-extrabold truncate">${n}</div><div class="text-xs mt-1" style="color:var(--muted)">${q} × ${money(p)}</div></div><div class="font-extrabold whitespace-nowrap">${money(q*p)}</div></div>`}).join('')}</div>`;
+}
+function card(x,mode){
+  if(mode==='customer')return `<div id="rosOrderDetailsV1" class="rounded-3xl p-5 mb-4" dir="rtl" style="background:linear-gradient(145deg,var(--surface2),var(--surface));border:1px solid color-mix(in srgb,var(--brand) 24%,transparent)"><div class="flex justify-between items-center gap-3 mb-4"><div><div class="text-xs font-bold" style="color:var(--muted)">YOUR ORDER</div><div class="text-xl font-extrabold">تفاصيل طلبك</div></div><div class="text-sm font-extrabold">${money(x.total)}</div></div>${itemsHtml(x.items)}<div class="mt-4 pt-4" style="border-top:1px solid color-mix(in srgb,var(--text) 10%,transparent)"><div class="flex justify-between gap-3 text-sm"><span style="color:var(--muted)">الحالة</span><span class="font-extrabold">${esc(x.status||'—')}</span></div></div></div>`;
+  return `<div id="rosOrderDetailsV1" class="rounded-3xl p-5 mb-4" dir="rtl" style="background:linear-gradient(145deg,var(--surface2),var(--surface));border:1px solid color-mix(in srgb,var(--brand) 24%,transparent)"><div class="flex justify-between items-center gap-3 mb-4"><div><div class="text-xs font-bold" style="color:var(--muted)">DELIVERY ORDER</div><div class="text-xl font-extrabold">تفاصيل طلب العميل</div></div><div class="text-sm font-extrabold">${money(x.total)}</div></div><div class="grid gap-2 mb-4"><div><span class="text-xs" style="color:var(--muted)">العميل</span><div class="font-extrabold">${esc(x.customer_name||'—')}</div></div><div><span class="text-xs" style="color:var(--muted)">الهاتف</span><div class="font-bold" dir="ltr">${esc(x.customer_phone||'—')}</div></div><div><span class="text-xs" style="color:var(--muted)">العنوان</span><div class="font-bold">${esc(x.address||'—')}</div></div></div><div class="font-extrabold mb-3">الطلب</div>${itemsHtml(x.items)}</div>`;
+}
+async function customer(){
+  if(!/^#track\//.test(location.hash||''))return;
+  const t=decodeURIComponent((location.hash||'').slice(7));if(!t)return;token=t;
+  try{const r=await window.db.rpc('public_track_order_v3',{p_token:t});if(r.error||!r.data?.length)return;const x=r.data[0],box=document.querySelector('#rosTrackBox');if(!box)return;const old=document.querySelector('#rosOrderDetailsV1');if(old)old.remove();box.insertAdjacentHTML('afterbegin',card(x,'customer'))}catch(_){ }
+}
+async function driver(){
+  if(!/^#driver\//.test(location.hash||''))return;
+  const t=decodeURIComponent((location.hash||'').slice(8));if(!t)return;token=t;
+  try{const r=await window.db.rpc('driver_get_orders',{p_token:t});if(r.error)return;const rows=Array.isArray(r.data)?r.data:[];const box=document.querySelector('#rosDriverBox');if(!box)return;const old=document.querySelector('#rosOrderDetailsV1');if(old)old.remove();if(!rows.length)return;const active=rows.filter(x=>!['delivered','cancelled'].includes(x.delivery_status||''));const list=active.length?active:rows;box.insertAdjacentHTML('afterbegin',list.map(x=>card(x,'driver')).join(''))}catch(_){ }
+}
+async function run(){const h=location.hash||'',route=/^#track\//.test(h)?'track':/^#driver\//.test(h)?'driver':'';if(route!==lastRoute){lastRoute=route;clearInterval(timer);timer=0}if(!route)return;await (route==='track'?customer:driver)();if(!timer)timer=setInterval(()=>route==='track'?customer():driver(),POLL_MS)}
+window.addEventListener('hashchange',run);setTimeout(run,1000);setInterval(()=>{if((location.hash||'')!==lastRouteHash){lastRouteHash=location.hash||'';run()}},1500);let lastRouteHash='';
+})();
