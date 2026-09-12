@@ -3,6 +3,16 @@
   if(window.__ROS_DELIVERY_ADMIN_ENHANCEMENTS__) return;
   window.__ROS_DELIVERY_ADMIN_ENHANCEMENTS__=true;
 
+  // Customer Tracking V2 must load globally, not only when the admin delivery panel exists.
+  // delivery-gps-clean-v2.js is already loaded before this file, so V2 safely wraps its router.
+  if(!document.querySelector('script[data-ros-customer-tracking-v2]')){
+    const s=document.createElement('script');
+    s.src='customer-tracking-v2.js?v=2';
+    s.async=false;
+    s.dataset.rosCustomerTrackingV2='1';
+    document.head.appendChild(s);
+  }
+
   async function enhance(){
     const panel=document.querySelector('#deliveryControlPanel');
     if(!panel||!window.db||!window.store?.restaurant?.id)return;
@@ -62,12 +72,4 @@
   const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>enhance().catch(console.warn),120)};
   new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
   schedule();
-
-  if(!document.querySelector('script[data-ros-customer-tracking-v2]')){
-    const s=document.createElement('script');
-    s.src='customer-tracking-v2.js?v=1';
-    s.async=false;
-    s.dataset.rosCustomerTrackingV2='1';
-    document.head.appendChild(s);
-  }
 })();
