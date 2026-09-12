@@ -5,6 +5,23 @@
 
   function isDriver(){return location.hash.startsWith('#driver/');}
 
+  function alreadyDelivered(button){
+    const article=button?.closest('#rosDriverBox article');
+    const badge=article?.querySelector('span');
+    return String(badge?.textContent||'').trim()==='تم التسليم';
+  }
+
+  document.addEventListener('click',function(event){
+    if(!isDriver()) return;
+    const button=event.target?.closest?.('#rosDriverBox article button');
+    if(!button) return;
+    if(String(button.textContent||'').trim()!=='تم التسليم') return;
+    if(!alreadyDelivered(button)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    button.disabled=true;
+  },true);
+
   function enhance(){
     if(!isDriver()) return;
     document.querySelectorAll('#rosDriverBox article').forEach(article=>{
