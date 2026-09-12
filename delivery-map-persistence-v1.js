@@ -2,7 +2,7 @@
 'use strict';
 if(window.__ROS_DELIVERY_MAP_PERSISTENCE_V1__)return;
 window.__ROS_DELIVERY_MAP_PERSISTENCE_V1__=true;
-const ids=['rosLiveMap','rosLiveMapV2'];
+const ids=['rosLiveMap','rosLiveMapV2','rosInlineMap'];
 const detached=new Set();
 function scan(){
   document.querySelectorAll('.leaflet-container').forEach(el=>detached.add(el));
