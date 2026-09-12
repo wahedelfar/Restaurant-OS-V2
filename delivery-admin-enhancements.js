@@ -28,26 +28,10 @@
     }
   }
 
-  // Protect the select from parent navigation while preserving native dropdown activation.
-  document.addEventListener('pointerdown',function(e){
-    const select=e.target?.closest?.('#deliveryControlPanel select[data-sel]');
-    if(select)e.stopPropagation();
-  },true);
-  document.addEventListener('mousedown',function(e){
-    const select=e.target?.closest?.('#deliveryControlPanel select[data-sel]');
-    if(select)e.stopPropagation();
-  },true);
+  // Do not intercept native select events. The assignment select is not inside a navigation link;
+  // intercepting pointer/click events can prevent the browser's native dropdown from opening.
   document.addEventListener('click',function(e){
-    const select=e.target?.closest?.('#deliveryControlPanel select[data-sel]');
-    if(select){
-      // If a parent anchor/navigation handler exists, cancel its default action.
-      // Do not cancel pointerdown/mousedown: the browser must still open the native select.
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      return;
-    }
-    const button=e.target?.closest?.('[data-assign]');
+    const button=e.target?.closest?.('#deliveryControlPanel [data-assign]');
     if(!button)return;
     const panel=button.closest('#deliveryControlPanel');
     if(!panel)return;
