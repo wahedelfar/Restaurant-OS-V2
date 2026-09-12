@@ -62,14 +62,4 @@
   const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>enhance().catch(console.warn),120)};
   new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
   schedule();
-
-  // Customer tracking must load independently of the admin panel. Keep it cache-busted so old PWA shells cannot silently serve V1.
-  if(!window.__ROS_CUSTOMER_TRACKING_LOADER_V2__){
-    window.__ROS_CUSTOMER_TRACKING_LOADER_V2__=true;
-    const s=document.createElement('script');
-    s.src='customer-tracking-v2.js?v=2';
-    s.async=false;
-    s.dataset.rosCustomerTrackingV2='1';
-    document.head.appendChild(s);
-  }
 })();
