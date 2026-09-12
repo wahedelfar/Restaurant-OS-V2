@@ -3,6 +3,45 @@
   if(window.__ROS_DELIVERY_ADMIN_ENHANCEMENTS__) return;
   window.__ROS_DELIVERY_ADMIN_ENHANCEMENTS__=true;
 
+  async function assignDelivery(orderId,driverId,button,select,panel){
+    if(!window.db||!window.store?.restaurant?.id)return;
+    if(!driverId){if(typeof toast==='function')toast('اختر مندوبًا أولًا');return}
+    button.disabled=true;
+    select.disabled=true;
+    const oldText=button.textContent;
+    button.textContent='جارٍ التعيين...';
+    try{
+      const rr=await db.rpc('admin_assign_delivery',{
+        p_restaurant_id:store.restaurant.id,
+        p_order_id:orderId,
+        p_driver_id:driverId
+      });
+      if(rr.error)throw rr.error;
+      if(typeof toast==='function')toast('تم تعيين المندوب بنجاح');
+      panel.querySelector('#rosRefresh')?.click();
+    }catch(e){
+      button.disabled=false;
+      select.disabled=false;
+      button.textContent=oldText;
+      if(typeof toast==='function')toast(e?.message||'تعذر تعيين المندوب');
+      console.error('admin_assign_delivery',e);
+    }
+  }
+
+  document.addEventListener('click',function(e){
+    const button=e.target?.closest?.('[data-assign]');
+    if(!button)return;
+    const panel=button.closest('#deliveryControlPanel');
+    if(!panel)return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const orderId=String(button.dataset.assign||'');
+    const select=Array.from(panel.querySelectorAll('[data-sel]')).find(x=>String(x.dataset.sel||'')===orderId);
+    if(!select)return;
+    assignDelivery(orderId,String(select.value||''),button,select,panel);
+  },true);
+
   async function enhance(){
     const panel=document.querySelector('#deliveryControlPanel');
     if(!panel||!window.db||!window.store?.restaurant?.id)return;
@@ -22,5 +61,5 @@
     });
   }
   let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>enhance().catch(console.warn),120)};new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();
-  if(!window.__ROS_ADMIN_UX_LOADER__){window.__ROS_ADMIN_UX_LOADER__=true;const s=document.createElement('script');s.src='admin-ux-notifications-v1.js?v=1';s.defer=true;document.head.appendChild(s)}
+  if(!window.__ROS_ADMIN_UX_LOADER__){window.__ROS_ADMIN_UX_LOADER__=true;const s=document.createElement('script');s.src='admin-ux-notifications-v1.js?v=3';s.defer=true;document.head.appendChild(s)}
 })();
