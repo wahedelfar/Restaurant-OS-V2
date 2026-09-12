@@ -16,13 +16,11 @@ function scan(){
     if(!mapEl)return;
     try{
       mapEl.id=id;
-      mapEl.style.height=target.style.height||'300px';
-      mapEl.className=target.className||'rounded-2xl overflow-hidden';
+      mapEl.style.height=target.style.height||mapEl.style.height||'300px';
+      if(target.className)target.className.split(/\s+/).filter(Boolean).forEach(c=>mapEl.classList.add(c));
       target.replaceWith(mapEl);
       detached.delete(mapEl);
-      setTimeout(()=>{
-        try{if(window.L&&mapEl._leaflet_id){const m=mapEl._leaflet_id;window.dispatchEvent(new Event('resize'))}}catch(_){ }
-      },80);
+      setTimeout(()=>{try{window.dispatchEvent(new Event('resize'));if(window.L&&mapEl._leaflet_id){const map=mapEl._leaflet_id&&window.L.Map?null:null}}catch(_){ }},100);
     }catch(_){ }
   });
 }
