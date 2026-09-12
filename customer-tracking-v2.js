@@ -4,6 +4,7 @@ if(window.__ROS_CUSTOMER_TRACKING_V2__) return;
 window.__ROS_CUSTOMER_TRACKING_V2__=true;
 const POLL_MS=30000;
 const originalRouter=window.renderRouter;
+try{window.removeEventListener('hashchange',originalRouter)}catch(_){ }
 let activeToken=null,timer=null,loading=false,lastData=null,map=null,marker=null,failures=0,routeKey='';
 const esc=v=>typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
 const money=v=>typeof window.money==='function'?window.money(v):`${Number(v||0).toFixed(0)} جنيه`;
