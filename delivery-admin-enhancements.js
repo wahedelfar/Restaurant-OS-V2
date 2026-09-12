@@ -1,6 +1,7 @@
 (function(){
   'use strict';
   if(window.__ROS_DELIVERY_ADMIN_ENHANCEMENTS__) return;
+  window.__ROS_DELIVERY_ADMIN_ENHANCEMENTS__=true;
 
   async function assignDelivery(orderId,driverId,button,select,panel){
     if(typeof db==='undefined'||!db||!window.store?.restaurant?.id)return;
@@ -27,7 +28,21 @@
     }
   }
 
+  // The assignment select may live inside a clickable container/link.
+  // Stop the bubbling click before it reaches that navigation handler,
+  // but NEVER preventDefault: the browser must be allowed to open the native select.
+  document.addEventListener('pointerdown',function(e){
+    if(e.target?.closest?.('#deliveryControlPanel select[data-sel]')) e.stopPropagation();
+  },true);
+  document.addEventListener('mousedown',function(e){
+    if(e.target?.closest?.('#deliveryControlPanel select[data-sel]')) e.stopPropagation();
+  },true);
   document.addEventListener('click',function(e){
+    const select=e.target?.closest?.('#deliveryControlPanel select[data-sel]');
+    if(select){
+      e.stopPropagation();
+      return;
+    }
     const button=e.target?.closest?.('[data-assign]');
     if(!button)return;
     const panel=button.closest('#deliveryControlPanel');
@@ -36,9 +51,9 @@
     e.stopPropagation();
     e.stopImmediatePropagation();
     const orderId=String(button.dataset.assign||'');
-    const select=Array.from(panel.querySelectorAll('[data-sel]')).find(x=>String(x.dataset.sel||'')===orderId);
-    if(!select)return;
-    assignDelivery(orderId,String(select.value||''),button,select,panel);
+    const assignSelect=Array.from(panel.querySelectorAll('select[data-sel]')).find(x=>String(x.dataset.sel||'')===orderId);
+    if(!assignSelect)return;
+    assignDelivery(orderId,String(assignSelect.value||''),button,assignSelect,panel);
   },true);
 
   async function enhance(){
