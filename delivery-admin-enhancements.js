@@ -28,19 +28,13 @@
     }
   }
 
-  // The assignment select may live inside a clickable container/link.
-  // Stop the bubbling click before it reaches that navigation handler,
-  // but NEVER preventDefault: the browser must be allowed to open the native select.
-  document.addEventListener('pointerdown',function(e){
-    if(e.target?.closest?.('#deliveryControlPanel select[data-sel]')) e.stopPropagation();
-  },true);
-  document.addEventListener('mousedown',function(e){
-    if(e.target?.closest?.('#deliveryControlPanel select[data-sel]')) e.stopPropagation();
-  },true);
+  // Keep the native <select> completely untouched for pointer/mouse activation.
+  // Only stop the final click from reaching any parent navigation handler.
   document.addEventListener('click',function(e){
     const select=e.target?.closest?.('#deliveryControlPanel select[data-sel]');
     if(select){
       e.stopPropagation();
+      e.stopImmediatePropagation();
       return;
     }
     const button=e.target?.closest?.('[data-assign]');
