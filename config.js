@@ -29,3 +29,17 @@ window.APP_CONFIG = {
     { id:'p5',category_id:'cat4',name:'بطاطس',description:'بطاطس مقرمشة',price:60,image:'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800',available:true,sort_order:5 }
   ]
 };
+
+// Routing compatibility for the isolated admin entry and legacy table QR links.
+(function(){
+  'use strict';
+  const admin=/^\/admin(?:\/index\.html)?\/?$/i.test(location.pathname);
+  const table=new URLSearchParams(location.search).get('table');
+  if(admin) window.__ROS_DELIVERY_NAV_FIX_V4__=true;
+  if(admin && table && /^\d+$/.test(table)){
+    location.replace('/?table='+encodeURIComponent(table));
+    return;
+  }
+  function load(src){if(document.querySelector('script[data-ros-route-fix="'+src+'"]'))return;const s=document.createElement('script');s.src=src;s.dataset.rosRouteFix=src;document.head.appendChild(s)}
+  window.addEventListener('load',function(){load('/table-route-fix-v1.js?v=1');if(admin)load('/admin-entry-compat-v1.js?v=1')},{once:true});
+})();
