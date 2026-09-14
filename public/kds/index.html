@@ -12,46 +12,169 @@
   <style>body{font-family:'Cairo',sans-serif}.hidden{display:none!important}</style>
 </head>
 <body class="bg-slate-950 text-white min-h-screen">
-  <div id="configScreen" class="min-h-screen flex items-center justify-center p-4"><div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl"><h1 class="text-2xl font-extrabold mb-2">إدارة المطبخ</h1><p class="text-slate-400 mb-6">أدخل بيانات Supabase مرة واحدة. سيتم حفظها محليًا على هذا الجهاز.</p><label class="block text-sm font-bold mb-2">Supabase URL</label><input id="supabaseUrl" type="url" autocomplete="off" placeholder="https://xxxx.supabase.co" class="w-full mb-4 rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 outline-none focus:border-amber-500" /><label class="block text-sm font-bold mb-2">Supabase Publishable/Anon Key</label><input id="supabaseKey" type="password" autocomplete="off" placeholder="ضع المفتاح هنا" class="w-full mb-4 rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 outline-none focus:border-amber-500" /><button id="saveConfig" class="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3">حفظ وتشغيل</button><p id="configError" class="text-red-400 text-sm mt-3 hidden"></p></div></div>
-  <div id="pinScreen" class="hidden min-h-screen flex items-center justify-center p-4"><div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl text-center"><div class="text-4xl mb-3">🔒</div><h1 class="text-2xl font-extrabold mb-6">إدارة المطبخ</h1><input id="pin" inputmode="numeric" type="password" maxlength="4" placeholder="PIN" class="w-full text-center text-3xl tracking-[0.5em] rounded-xl bg-slate-950 border border-slate-700 px-4 py-4 mb-4 outline-none focus:border-amber-500" /><button id="login" class="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3">دخول</button><p id="pinError" class="text-red-400 text-sm mt-3 hidden">PIN غير صحيح</p></div></div>
-  <main id="app" class="hidden"><header class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between gap-3"><div><h1 class="text-xl md:text-2xl font-extrabold">إدارة المطبخ</h1><p id="connection" class="text-xs text-slate-400">جارٍ الاتصال...</p></div><button id="logout" class="rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-2 text-sm font-bold">خروج</button></header><section id="orders" class="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></section><div id="empty" class="hidden text-center text-slate-500 py-16">لا توجد طلبات.</div></main>
+  <div id="configScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+      <h1 class="text-2xl font-extrabold mb-2">إدارة المطبخ</h1>
+      <p class="text-slate-400 mb-6">أدخل بيانات Supabase مرة واحدة. سيتم حفظها محليًا على هذا الجهاز.</p>
+      <label class="block text-sm font-bold mb-2">Supabase URL</label>
+      <input id="supabaseUrl" type="url" autocomplete="off" placeholder="https://xxxx.supabase.co" class="w-full mb-4 rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 outline-none focus:border-amber-500" />
+      <label class="block text-sm font-bold mb-2">Supabase Publishable/Anon Key</label>
+      <input id="supabaseKey" type="password" autocomplete="off" placeholder="ضع المفتاح هنا" class="w-full mb-4 rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 outline-none focus:border-amber-500" />
+      <button id="saveConfig" class="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3">حفظ وتشغيل</button>
+      <p id="configError" class="text-red-400 text-sm mt-3 hidden"></p>
+    </div>
+  </div>
+
+  <div id="pinScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl text-center">
+      <div class="text-4xl mb-3">🔒</div>
+      <h1 class="text-2xl font-extrabold mb-6">إدارة المطبخ</h1>
+      <input id="pin" inputmode="numeric" type="password" maxlength="4" placeholder="PIN" class="w-full text-center text-3xl tracking-[0.5em] rounded-xl bg-slate-950 border border-slate-700 px-4 py-4 mb-4 outline-none focus:border-amber-500" />
+      <button id="login" class="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3">دخول</button>
+      <p id="pinError" class="text-red-400 text-sm mt-3 hidden">PIN غير صحيح</p>
+    </div>
+  </div>
+
+  <main id="app" class="hidden">
+    <header class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between gap-3">
+      <div><h1 class="text-xl md:text-2xl font-extrabold">إدارة المطبخ</h1><p id="connection" class="text-xs text-slate-400">جارٍ الاتصال...</p></div>
+      <button id="logout" class="rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-2 text-sm font-bold">خروج</button>
+    </header>
+    <section id="orders" class="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></section>
+    <div id="empty" class="hidden text-center text-slate-500 py-16">لا توجد طلبات.</div>
+  </main>
+
   <script>
     const PIN='1234';
-    let supabaseClient=null,initialized=false,lastOrderIds=new Set(),pollTimer=null,realtimeChannel=null,audioCtx=null,notificationAsked=false;
+    let supabaseClient=null,initialized=false,lastOrderIds=new Set(),oldCount=0,pollTimer=null,realtimeChannel=null;
+    let audioCtx = null;
     const $=id=>document.getElementById(id);
-    const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    function showConfig(){ $('configScreen').classList.remove('hidden'); $('pinScreen').classList.add('hidden'); $('app').classList.add('hidden'); }
-    function showPin(){ $('configScreen').classList.add('hidden'); $('pinScreen').classList.remove('hidden'); $('app').classList.add('hidden'); setTimeout(()=>$('pin').focus(),50); }
-    function showApp(){ $('configScreen').classList.add('hidden'); $('pinScreen').classList.add('hidden'); $('app').classList.remove('hidden'); }
-    function getConfig(){return {url:localStorage.getItem('supabase_url')||'',key:localStorage.getItem('supabase_key')||''};}
-    function apiBase(){return getConfig().url.replace(/\/$/,'')+'/functions/v1/kitchen-api';}
+    const esc=v=>String(v??'').replace(/[&<>\'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    const getConfig=()=>({url:localStorage.getItem('supabase_url')||'',key:localStorage.getItem('supabase_key')||''});
+    const apiBase=()=>getConfig().url.replace(/\/$/,'')+'/functions/v1/kitchen-api';
 
-    function ensureAudio(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});}catch(e){console.warn('Web Audio unavailable',e);}}
-    function playDing(){try{ensureAudio();if(!audioCtx)return;const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.frequency.value=880;g.gain.value=0.5;o.start();g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.5);o.stop(audioCtx.currentTime+0.5);}catch(e){console.warn('Ding failed',e);}}
-    async function requestNotificationPermission(){if(notificationAsked||!('Notification' in window))return;notificationAsked=true;if(Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}}
-    function notifyNewOrder(order){if(!('Notification' in window)||Notification.permission!=='granted')return;const table=order?.table_number??'—';try{new Notification('طلب جديد - ترابيزة '+table);}catch(e){}}
+    function initAudio(){
+      if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      if(audioCtx.state==='suspended') audioCtx.resume();
+    }
+    function playDing(){
+      try{
+        initAudio();
+        const o=audioCtx.createOscillator(); const g=audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.value=880; o.type='sine';
+        g.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.5);
+        o.start(); o.stop(audioCtx.currentTime+0.5);
+      }catch(e){console.log('audio blocked',e)}
+    }
 
-    async function initSupabase(){const {url,key}=getConfig();if(!url||!key){showConfig();return false;}try{supabaseClient=window.supabase.createClient(url.trim(),key.trim());initialized=true;return true;}catch(e){$('configError').textContent='بيانات Supabase غير صحيحة.';$('configError').classList.remove('hidden');showConfig();return false;}}
-    async function callApi(method='GET',body=null){const options={method,headers:{'x-kitchen-pin':PIN,'Content-Type':'application/json'}};if(body)options.body=JSON.stringify(body);const res=await fetch(apiBase(),options);const data=await res.json().catch(()=>({error:'استجابة غير صالحة'}));if(!res.ok)throw new Error(data.error||'فشل الاتصال بخدمة المطبخ');return data;}
+    async function requestNotificationPermission(){
+      if(!('Notification' in window)) return;
+      if(Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}
+    }
+    function notifyNewOrder(){
+      if('Notification' in window && Notification.permission==='granted'){try{new Notification('طلب جديد');}catch(e){}}
+    }
+    function showConfig(){$('configScreen').classList.remove('hidden');$('pinScreen').classList.add('hidden');$('app').classList.add('hidden');}
+    function showPin(){$('configScreen').classList.add('hidden');$('pinScreen').classList.remove('hidden');$('app').classList.add('hidden');setTimeout(()=>$('pin').focus(),50);}
+    function showApp(){$('configScreen').classList.add('hidden');$('pinScreen').classList.add('hidden');$('app').classList.remove('hidden');}
+
+    async function initSupabase(){
+      const {url,key}=getConfig();
+      if(!url||!key){showConfig();return false;}
+      try{supabaseClient=window.supabase.createClient(url.trim(),key.trim());initialized=true;return true;}
+      catch(e){$('configError').textContent='بيانات Supabase غير صحيحة.';$('configError').classList.remove('hidden');showConfig();return false;}
+    }
+    async function callApi(method='GET',body=null){
+      const options={method,headers:{'Content-Type':'application/json','x-kitchen-pin':PIN}};
+      if(body) options.body=JSON.stringify(body);
+      const res=await fetch(apiBase(),options);
+      const data=await res.json().catch(()=>({error:'استجابة غير صالحة'}));
+      if(!res.ok) throw new Error(data.error||'فشل الاتصال بخدمة المطبخ');
+      return data;
+    }
     function deliveryStatus(order){const d=order.delivery_orders;return Array.isArray(d)?d[0]?.status:d?.status;}
-    function isClosed(order){const s=String(order.status||'').toLowerCase();const ds=String(deliveryStatus(order)||'').toLowerCase();return ['cancelled','canceled','delivered'].includes(s)||['cancelled','canceled','delivered'].includes(ds);}
-    function kitchenStatus(order){const s=String(order.kitchen_status||'').toLowerCase();if(s==='cooking')return 'preparing';if(s==='new'||!s)return 'received';return ['received','preparing','ready'].includes(s)?s:'received';}
+    function isClosed(order){const s=String(order.status||'').toLowerCase(),ds=String(deliveryStatus(order)||'').toLowerCase();return ['cancelled','canceled','delivered'].includes(s)||['cancelled','canceled','delivered'].includes(ds);}
+    function kitchenStatus(order){const s=String(order.kitchen_status||'').toLowerCase();if(s==='cooking')return'preparing';if(s==='new'||!s)return'received';return['received','preparing','ready'].includes(s)?s:'received';}
 
-    async function fetchOrders(playSound=false,sourceOrder=null){if(!initialized)return;try{const data=await callApi('GET');const orders=(Array.isArray(data)?data:[]).filter(o=>!isClosed(o));const oldIds=lastOrderIds;const ids=new Set(orders.map(o=>String(o.id)));const newOrders=orders.filter(o=>!oldIds.has(String(o.id)));if(playSound||newOrders.length>0){playDing();if(newOrders.length)notifyNewOrder(newOrders[0]||sourceOrder);}lastOrderIds=ids;$('connection').textContent='متصل — الطلبات تتحدث تلقائيًا';$('connection').className='text-xs text-emerald-400';renderOrders(orders);}catch(e){$('connection').textContent='تعذر الاتصال بخدمة المطبخ';$('connection').className='text-xs text-red-400';console.error(e);}}
-    function parseItems(order){const raw=order.items??[];if(Array.isArray(raw))return raw;if(typeof raw==='string'){try{const parsed=JSON.parse(raw);return Array.isArray(parsed)?parsed:[raw];}catch{return [raw];}}if(raw&&typeof raw==='object')return Object.entries(raw).map(([name,qty])=>({name,quantity:qty}));return [];}
-    function itemText(item){if(typeof item==='string')return esc(item);if(!item||typeof item!=='object')return esc(item??'');const name=item.name??item.title??item.product_name??item.item_name??item.product??'صنف';const qty=item.quantity??item.qty??item.count??1;return `${esc(name)} × ${esc(qty)}`;}
-    function renderOrders(orders){const root=$('orders');root.innerHTML='';$('empty').classList.toggle('hidden',orders.length>0);orders.forEach(order=>{const external=order.order_type==='delivery',tableNo=order.table_number??'-',customer=order.customer_name??'-',phone=order.customer_phone??'-',address=order.address??'-',total=order.total??'-',status=kitchenStatus(order),items=parseItems(order),id=order.id,created=order.created_at?new Date(order.created_at).toLocaleString('ar-EG'):'';const card=document.createElement('article');card.className='bg-white text-slate-950 rounded-2xl shadow-xl overflow-hidden border-4 '+(status==='ready'?'border-emerald-500':status==='preparing'?'border-amber-500':'border-red-500');card.innerHTML=`<div class="px-4 py-3 bg-slate-900 text-white flex justify-between items-center gap-2"><div class="font-extrabold">${external?'خارجي — دليفري':'داخلي — ترابيزة '+esc(tableNo)}</div><div class="text-xs text-slate-300">${esc(created)}</div></div><div class="p-4 space-y-3"><div class="grid grid-cols-2 gap-2 text-sm"><div><b>العميل:</b> ${esc(customer)}</div><div><b>الهاتف:</b> ${esc(phone)}</div><div class="col-span-2"><b>العنوان:</b> ${external?esc(address):'طلب داخل المطعم'}</div>${external?'':`<div><b>رقم الترابيزة:</b> ${esc(tableNo)}</div>`}<div><b>الحالة:</b> ${esc(status)}</div></div><div class="border-t pt-3"><h3 class="font-extrabold mb-2">الأصناف</h3><ul class="list-disc pr-5 space-y-1 text-sm">${items.length?items.map(i=>`<li>${itemText(i)}</li>`).join(''):'<li>لا توجد أصناف</li>'}</ul></div><div class="text-lg font-extrabold border-t pt-3">الإجمالي: ${esc(total)}</div><div class="grid grid-cols-1 sm:grid-cols-3 gap-2"><button data-action="status" data-status="received" data-id="${esc(id)}" class="rounded-lg bg-slate-200 hover:bg-slate-300 py-2 px-2 text-xs font-extrabold">تم الاستلام</button><button data-action="status" data-status="preparing" data-id="${esc(id)}" class="rounded-lg bg-amber-500 hover:bg-amber-400 py-2 px-2 text-xs font-extrabold">جاري التجهيز</button><button data-action="status" data-status="ready" data-id="${esc(id)}" class="rounded-lg bg-emerald-500 hover:bg-emerald-400 py-2 px-2 text-xs font-extrabold">الطلب جاهز</button></div><button data-action="archive" data-id="${esc(id)}" class="w-full rounded-lg bg-red-600 hover:bg-red-500 text-white py-2 font-extrabold">مسح الأوردر</button></div>`;root.appendChild(card);});}
-    async function updateStatus(id,status){try{await callApi('POST',{order_id:id,new_status:status});await fetchOrders(false);}catch(e){alert(e.message);}}
-    async function archiveOrder(id){if(!confirm('هل تريد مسح الأوردر من المطبخ فقط؟'))return;try{await callApi('POST',{action:'archive',order_id:id});await fetchOrders(false);}catch(e){alert(e.message);}}
-    function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(()=>fetchOrders(false),15000);}
-    function startRealtime(){if(!supabaseClient)return;try{if(realtimeChannel){supabaseClient.removeChannel(realtimeChannel);realtimeChannel=null;}realtimeChannel=supabaseClient.channel('orders-kds').on('postgres_changes',{event:'INSERT',schema:'public',table:'orders'},payload=>{const order=payload?.new;if(order?.is_hidden_from_kds===true)return;playDing();notifyNewOrder(order);fetchOrders(false,order);}).subscribe();}catch(e){console.warn('Realtime unavailable',e);}}
+    async function loadOrders(){
+      if(!initialized)return;
+      try{
+        const data=await callApi('GET');
+        const orders=(Array.isArray(data)?data:[]).filter(o=>!isClosed(o));
+        const ids=new Set(orders.map(o=>String(o.id)));
+        const newOrders=orders.filter(o=>!lastOrderIds.has(String(o.id)));
+        if(oldCount>0 && newOrders.length>0){playDing();notifyNewOrder();}
+        oldCount=orders.length;
+        lastOrderIds=ids;
+        $('connection').textContent='متصل — الطلبات تتحدث تلقائيًا';
+        $('connection').className='text-xs text-emerald-400';
+        renderOrders(orders);
+      }catch(e){$('connection').textContent='تعذر الاتصال بخدمة المطبخ';$('connection').className='text-xs text-red-400';console.error(e);}
+    }
+    function parseItems(order){
+      const raw=order.items??[];
+      if(Array.isArray(raw))return raw;
+      if(typeof raw==='string'){try{const p=JSON.parse(raw);return Array.isArray(p)?p:[raw];}catch{return[raw];}}
+      if(raw&&typeof raw==='object')return Object.entries(raw).map(([name,qty])=>({name,quantity:qty}));
+      return[];
+    }
+    function itemText(item){
+      if(typeof item==='string')return esc(item);
+      if(!item||typeof item!=='object')return esc(item??'');
+      const name=item.name??item.title??item.product_name??item.item_name??item.product??'صنف';
+      const qty=item.quantity??item.qty??item.count??1;
+      return `${esc(name)} × ${esc(qty)}`;
+    }
+    function renderOrders(orders){
+      const root=$('orders');root.innerHTML='';$('empty').classList.toggle('hidden',orders.length>0);
+      orders.forEach(order=>{
+        const external=order.order_type==='delivery',tableNo=order.table_number??'-',customer=order.customer_name??'-',phone=order.customer_phone??'-',address=order.address??'-',total=order.total??'-',status=kitchenStatus(order),items=parseItems(order),id=order.id,created=order.created_at?new Date(order.created_at).toLocaleString('ar-EG'):'';
+        const card=document.createElement('article');
+        card.className='bg-white text-slate-950 rounded-2xl shadow-xl overflow-hidden border-4 '+(status==='ready'?'border-emerald-500':status==='preparing'?'border-amber-500':'border-red-500');
+        card.innerHTML=`<div class="px-4 py-3 bg-slate-900 text-white flex justify-between items-center gap-2"><div class="font-extrabold">${external?'خارجي — دليفري':'داخلي — ترابيزة '+esc(tableNo)}</div><div class="text-xs text-slate-300">${esc(created)}</div></div><div class="p-4 space-y-3"><div class="grid grid-cols-2 gap-2 text-sm"><div><b>العميل:</b> ${esc(customer)}</div><div><b>الهاتف:</b> ${esc(phone)}</div><div class="col-span-2"><b>العنوان:</b> ${external?esc(address):'طلب داخل المطعم'}</div>${external?'':`<div><b>رقم الترابيزة:</b> ${esc(tableNo)}</div>`}<div><b>الحالة:</b> ${esc(status)}</div></div><div class="border-t pt-3"><h3 class="font-extrabold mb-2">الأصناف</h3><ul class="list-disc pr-5 space-y-1 text-sm">${items.length?items.map(i=>`<li>${itemText(i)}</li>`).join(''):'<li>لا توجد أصناف</li>'}</ul></div><div class="text-lg font-extrabold border-t pt-3">الإجمالي: ${esc(total)}</div><div class="grid grid-cols-1 sm:grid-cols-3 gap-2"><button data-action="status" data-status="received" data-id="${esc(id)}" class="rounded-lg bg-slate-200 hover:bg-slate-300 py-2 px-2 text-xs font-extrabold">تم الاستلام</button><button data-action="status" data-status="preparing" data-id="${esc(id)}" class="rounded-lg bg-amber-500 hover:bg-amber-400 py-2 px-2 text-xs font-extrabold">جاري التجهيز</button><button data-action="ready" data-id="${esc(id)}" class="rounded-lg bg-emerald-500 hover:bg-emerald-400 py-2 px-2 text-xs font-extrabold">الطلب جاهز</button></div><button data-action="archive" data-id="${esc(id)}" class="w-full rounded-lg bg-red-600 hover:bg-red-500 text-white py-2 font-extrabold">مسح الأوردر</button></div>`;
+        root.appendChild(card);
+      });
+    }
+    async function updateStatus(id,status){try{await callApi('POST',{action:'update_status',order_id:id,new_status:status});await loadOrders();}catch(e){alert(e.message);}}
+    async function readyOrder(id){try{await callApi('POST',{action:'ready',id});await loadOrders();}catch(e){alert(e.message);}}
+    async function archiveOrder(orderId){
+      if(!confirm('هل تريد مسح الأوردر من المطبخ فقط؟'))return;
+      try{
+        const {url,key}=getConfig();
+        const res=await fetch(`${url.replace(/\/$/,'')}/functions/v1/kitchen-api`,{method:'POST',headers:{'Content-Type':'application/json','apikey':key,'Authorization':`Bearer ${key}`,'x-kitchen-pin':PIN},body:JSON.stringify({action:'archive',id:orderId})});
+        const data=await res.json().catch(()=>({}));
+        if(!res.ok)throw new Error(data.error||'فشل مسح الأوردر من المطبخ');
+        await loadOrders();
+      }catch(e){alert(e.message);}
+    }
+    function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(loadOrders,15000);}
+    function startRealtime(){
+      if(!supabaseClient)return;
+      try{
+        if(realtimeChannel)supabaseClient.removeChannel(realtimeChannel);
+        realtimeChannel=supabaseClient.channel('kds-orders').on('postgres_changes',{event:'INSERT',schema:'public',table:'orders'},()=>{playDing();loadOrders();}).subscribe();
+      }catch(e){console.warn('Realtime unavailable',e);}
+    }
 
-    $('saveConfig').onclick=async()=>{const url=$('supabaseUrl').value.trim(),key=$('supabaseKey').value.trim();if(!url||!key){$('configError').textContent='أدخل Supabase URL والمفتاح.';$('configError').classList.remove('hidden');return;}localStorage.setItem('supabase_url',url);localStorage.setItem('supabase_key',key);$('configError').classList.add('hidden');if(await initSupabase())showPin();};
-    $('login').onclick=async()=>{if($('pin').value.trim()===PIN){localStorage.setItem('kds_auth','1');ensureAudio();await requestNotificationPermission();showApp();await fetchOrders(false);startPolling();startRealtime();}else{$('pinError').classList.remove('hidden');$('pin').value='';$('pin').focus();}};
-    $('pin').onkeydown=e=>{if(e.key==='Enter')$('login').click();};
+    $('saveConfig').onclick=async()=>{
+      const url=$('supabaseUrl').value.trim(),key=$('supabaseKey').value.trim();
+      if(!url||!key){$('configError').textContent='أدخل Supabase URL والمفتاح.';$('configError').classList.remove('hidden');return;}
+      localStorage.setItem('supabase_url',url);localStorage.setItem('supabase_key',key);$('configError').classList.add('hidden');
+      initAudio();
+      if(await initSupabase())showPin();
+    };
+    async function verifyPin(){
+      initAudio();
+      if($('pin').value.trim()===PIN){localStorage.setItem('kds_auth','1');await requestNotificationPermission();showApp();await loadOrders();startPolling();startRealtime();}
+      else{$('pinError').classList.remove('hidden');$('pin').value='';$('pin').focus();}
+    }
+    $('login').onclick=verifyPin;
+    $('pin').onkeydown=e=>{if(e.key==='Enter')verifyPin();};
     $('logout').onclick=()=>{localStorage.removeItem('kds_auth');clearInterval(pollTimer);if(realtimeChannel&&supabaseClient){supabaseClient.removeChannel(realtimeChannel);realtimeChannel=null;}showPin();};
-    $('orders').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='archive')archiveOrder(id);if(b.dataset.action==='status')updateStatus(id,b.dataset.status);});
-    (async()=>{const ok=await initSupabase();if(!ok)return;$('supabaseUrl').value=getConfig().url;$('supabaseKey').value=getConfig().key;if(localStorage.getItem('kds_auth')==='1'){ensureAudio();requestNotificationPermission();showApp();fetchOrders(false);startPolling();startRealtime();}else showPin();})();
+    $('orders').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='archive')archiveOrder(id);else if(b.dataset.action==='ready')readyOrder(id);else if(b.dataset.action==='status')updateStatus(id,b.dataset.status);});
+    (async()=>{const ok=await initSupabase();if(!ok)return;$('supabaseUrl').value=getConfig().url;$('supabaseKey').value=getConfig().key;if(localStorage.getItem('kds_auth')==='1'){initAudio();requestNotificationPermission();showApp();await loadOrders();startPolling();startRealtime();}else showPin();})();
   </script>
 </body>
 </html>
