@@ -2,155 +2,51 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>المطبخ - Live</title>
+<title>المطبخ</title>
 <style>
 *{box-sizing:border-box;font-family:system-ui}body{margin:0;background:#0f172a;color:#fff}
 .login{height:100vh;display:flex;align-items:center;justify-content:center}
-.card{background:#1f2937;padding:32px;border-radius:16px;width:360px;text-align:center}
-input{width:100%;padding:14px;border-radius:10px;border:none;margin:12px 0;font-size:22px;text-align:center;letter-spacing:6px}
-button{width:100%;padding:12px;border:none;border-radius:10px;background:#f59e0b;font-weight:700;cursor:pointer}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;padding:12px}
-.col{background:#1e293b;border-radius:12px;min-height:70vh;padding:10px}
-.col h2{text-align:center;border-bottom:1px solid #334155;padding-bottom:8px}
-.order{background:#fff;color:#111;border-radius:10px;padding:10px;margin:8px 0;border-right:5px solid #ef4444}
-.order.prep{border-color:#f59e0b}.order.ready{border-color:#10b981}
-.hidden{display:none}
-.badge{background:#f59e0b;color:#000;padding:2px 8px;border-radius:20px;font-size:12px}
-.cfg{background:#111827;padding:12px;margin:12px;border-radius:10px;font-size:12px;text-align:left;direction:ltr}
+.card{background:#1e293b;padding:32px;border-radius:16px;width:320px;text-align:center}
+input{width:100%;padding:14px;border-radius:10px;border:2px solid #334155;background:#0f172a;color:#fff;margin:14px 0;font-size:24px;text-align:center;letter-spacing:8px;outline:none}
+input:focus{border-color:#f59e0b}
+button{width:100%;padding:14px;border:none;border-radius:10px;background:#f59e0b;font-weight:800;font-size:16px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}
+.col{background:#1e293b;border-radius:12px;min-height:80vh;padding:10px}
+.col h2{font-size:14px;text-align:center;border-bottom:1px solid #334155;padding-bottom:8px;margin:0 0 10px}
+.order{background:#fff;color:#000;border-radius:10px;padding:10px;margin:8px 0}
+.hidden{display:none!important}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<div id="login" class="login">
+<div id="L" class="login">
   <div class="card">
-    <h1>🔒 مطبخ Live</h1>
-    <div style="font-size:11px;color:#10b981">● Live متصل بـ Supabase</div>
-    <input id="pin" type="tel" maxlength="4" placeholder="1234" inputmode="numeric" style="margin-top:12px">
-    <button onclick="login()">دخول</button>
-    <p id="err" style="color:#ef4444;display:none">PIN غلط</p>
+    <h2>🔒 مطبخ</h2>
+    <input id="pin" type="tel" maxlength="4" placeholder="----" autocomplete="off">
+    <button id="btn">دخول</button>
+    <p id="err" style="color:#ef4444;display:none;margin:10px 0 0">PIN غلط - اكتب 1234</p>
   </div>
 </div>
-
-<div id="app" class="hidden">
-  <div style="padding:12px;background:#111827;display:flex;justify-content:space-between;align-items:center">
-    <div>🍳 مطبخ <span id="count" class="badge">0</span> <span id="conn" style="font-size:11px;color:#94a3b8;margin-right:8px"></span></div>
-    <div style="display:flex;gap:6px"><button onclick="fetchAll()" style="width:auto;padding:6px 10px;background:#1e293b;color:#fff">تحديث</button><button onclick="logout()" style="width:auto;padding:6px 10px;background:#334155;color:#fff">خروج</button></div>
-  </div>
+<div id="A" class="hidden">
+  <div style="padding:10px;background:#111827;display:flex;justify-content:space-between"><b>🍳 المطبخ</b><button onclick="localStorage.removeItem('k_auth');location.reload()" style="width:auto;padding:6px 12px;background:#334155;color:#fff;border:none;border-radius:8px;cursor:pointer">خروج</button></div>
   <div class="grid">
-    <div class="col"><h2>🔴 جديد</h2><div id="list-new"></div></div>
-    <div class="col"><h2>🟡 تحضير</h2><div id="list-prep"></div></div>
-    <div class="col"><h2>🟢 جاهز للتسليم</h2><div id="list-ready"></div></div>
+    <div class="col"><h2>🔴 جديد</h2><div id="n"></div></div>
+    <div class="col"><h2>🟡 تحضير</h2><div id="p"></div></div>
+    <div class="col"><h2>🟢 جاهز</h2><div id="r"></div></div>
   </div>
 </div>
-<audio id="ding" src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3" preload="auto"></audio>
-
 <script>
-const PIN="1234";
-let supabase=null;
-let lastIds=new Set();
-const HARD_URL="https://znnnkoujfuweydvbkejh.supabase.co";
-const HARD_KEY="sb_publishable_gjYA4-E-BL0X1hc3YugqyQ_1VaOo_se";
-
-function saveCfg(){
-  const url=document.getElementById('sUrl').value.trim();
-  const key=document.getElementById('sKey').value.trim();
-  if(!url||!key){alert('حط URL و anon key');return;}
-  localStorage.setItem('kitchen_supabase_url',url);
-  localStorage.setItem('kitchen_supabase_key',key);
-  initSupabase();
-  alert('تم الحفظ - جرب تدخل PIN');
+const PIN='1234';
+function doLogin(){
+  const v=document.getElementById('pin').value.trim();
+  if(v===PIN){localStorage.setItem('k_auth','1');show();}else{document.getElementById('err').style.display='block';document.getElementById('pin').value='';document.getElementById('pin').focus();}
 }
-function initSupabase(){
-  let url=localStorage.getItem('kitchen_supabase_url') || HARD_URL;
-  let key=localStorage.getItem('kitchen_supabase_key') || HARD_KEY;
-  try{
-    supabase=window.supabase.createClient(url,key);
-    document.getElementById('conn').textContent='● متصل Live';
-    document.getElementById('cfgBox').style.display='none';
-  }catch(e){
-    document.getElementById('conn').textContent='خطأ';
-  }
+function show(){document.getElementById('L').classList.add('hidden');document.getElementById('A').classList.remove('hidden');load();}
+function load(){
+  const d=document.getElementById('n');d.innerHTML='<div class="order"><b>#TEST-1</b><br>2 شاورما<br><small>'+new Date().toLocaleTimeString('ar-EG')+'</small><br><button onclick="this.parentElement.remove()" style="margin-top:6px;background:#f59e0b;border:none;padding:6px 10px;border-radius:6px;cursor:pointer">تحضير</button></div>';
 }
-function login(){
-  if(document.getElementById('pin').value.trim()!==PIN){document.getElementById('err').style.display='block';return;}
-  localStorage.setItem('kitchen_auth','1'); show();
-}
-function show(){
-  document.getElementById('login').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  initSupabase();
-  fetchAll();
-  setInterval(fetchAll,4000);
-  // realtime
-  if(supabase){
-    supabase.channel('orders-kitchen').on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>fetchAll()).on('postgres_changes',{event:'*',schema:'public',table:'delivery_orders'},()=>fetchAll()).subscribe();
-  }
-}
-function logout(){localStorage.removeItem('kitchen_auth');location.reload();}
-
-async function fetchAll(){
-  if(!supabase){renderMock();return;}
-  try{
-    const [o1,o2]=await Promise.all([
-      supabase.from('orders').select('*').order('created_at',{ascending:false}).limit(50),
-      supabase.from('delivery_orders').select('*').order('created_at',{ascending:false}).limit(50)
-    ]);
-    let all=[];
-    if(o1.data) all=all.concat(o1.data.map(r=>({...r,_src:'orders'})));
-    if(o2.data) all=all.concat(o2.data.map(r=>({...r,_src:'delivery'})));
-    // filter only kitchen relevant - not delivered/cancelled
-    all=all.filter(r=>!['delivered','cancelled','done'].includes((r.status||'').toLowerCase()));
-    if(all.length===0){renderEmpty();return;}
-    render(all);
-  }catch(e){console.error(e); document.getElementById('conn').textContent='خطأ اتصال'; renderMock();}
-}
-
-function render(list){
-  const cols={new:document.getElementById('list-new'),prep:document.getElementById('list-prep'),ready:document.getElementById('list-ready')};
-  Object.values(cols).forEach(c=>c.innerHTML='');
-  let newIds=new Set();
-  list.forEach(r=>{
-    newIds.add(r.id);
-    const state=(r.status||'new').toLowerCase();
-    let bucket='new';
-    if(['preparing','prep','in_kitchen'].includes(state)) bucket='prep';
-    if(['ready','ready_for_delivery','done_kitchen'].includes(state)) bucket='ready';
-    const el=document.createElement('div');
-    el.className='order '+(bucket==='prep'?'prep':bucket==='ready'?'ready':'');
-    const items = (()=>{ try{ if(Array.isArray(r.items)) return r.items.map(i=> (i.name||i.product||'') + ' x'+(i.qty||i.quantity||1)).join('<br>'); if(typeof r.items==='string') return r.items; return JSON.stringify(r.items||''); }catch{ return r.items||''; } })();
-    el.innerHTML=`<div style="display:flex;justify-content:space-between"><b>#${String(r.id).slice(0,8)} <small style="color:#64748b">(${r._src})</small></b><small>${r.created_at?new Date(r.created_at).toLocaleTimeString('ar-EG'):''}</small></div>
-    <div style="margin:6px 0;font-size:13px">${items||'بدون تفاصيل'}</div>
-    <div style="font-size:11px;color:#64748b">الاجمالي: ${r.total||''} | ${r.table_number||r.table||''} ${r.customer_name||''}</div>
-    <div style="display:flex;gap:4px;margin-top:6px">
-      ${bucket==='new'?`<button onclick="updateStatus('${r.id}','${r._src}','preparing')" style="background:#f59e0b">بدء تحضير</button>`:''}
-      ${bucket==='prep'?`<button onclick="updateStatus('${r.id}','${r._src}','ready')" style="background:#10b981;color:#fff">جاهز</button>`:''}
-      ${bucket==='ready'?`<button onclick="updateStatus('${r.id}','${r._src}','delivered')" style="background:#334155;color:#fff">تم التسليم</button>`:''}
-    </div>`;
-    cols[bucket].appendChild(el);
-  });
-  document.getElementById('count').textContent=list.length;
-  // ding if new order
-  for(let id of newIds){ if(!lastIds.has(id)){ document.getElementById('ding').play().catch(()=>{}); break; } }
-  lastIds=newIds;
-}
-function renderEmpty(){
-  document.getElementById('list-new').innerHTML='<div style="color:#94a3b8;text-align:center;padding:20px">لا يوجد اوردرات حاليا - الجدول فاضي</div>';
-  document.getElementById('list-prep').innerHTML='';document.getElementById('list-ready').innerHTML='';
-  document.getElementById('count').textContent='0';
-}
-function renderMock(){
-  document.getElementById('conn').textContent='وضع تيست - ضع بيانات Supabase';
-  renderEmpty();
-}
-async function updateStatus(id,src,newStatus){
-  if(!supabase) return;
-  const table = src==='delivery'?'delivery_orders':'orders';
-  const {error}=await supabase.from(table).update({status:newStatus}).eq('id',id);
-  if(error) alert('خطأ: '+error.message); else fetchAll();
-}
-initSupabase();
-if(localStorage.getItem('kitchen_auth')==='1'){show();}
-document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+document.getElementById('btn').onclick=doLogin;
+document.getElementById('pin').onkeydown=e=>{if(e.key==='Enter')doLogin();};
+if(localStorage.getItem('k_auth')==='1')show();
 </script>
 </body>
 </html>
