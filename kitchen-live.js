@@ -1,0 +1,32 @@
+(function(){
+'use strict';
+if(window.__ROS_KITCHEN_LIVE_V1__)return;
+window.__ROS_KITCHEN_LIVE_V1__=true;
+const PIN='1234';
+const API=()=>String(localStorage.getItem('supabase_url')||window.APP_CONFIG?.supabaseUrl||'').replace(/\/$/,'')+'/functions/v1/kitchen-api';
+const key=()=>localStorage.getItem('supabase_key')||window.APP_CONFIG?.supabaseAnonKey||window.APP_CONFIG?.supabaseKey||'';
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const fmtTime=v=>{try{return new Date(v).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}catch(_){return '—'}};
+const api=async(body)=>{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'application/json','x-kitchen-pin':PIN,'apikey':key(),'Authorization':'Bearer '+key()},body:JSON.stringify(body)});const d=await r.json().catch(()=>({error:'استجابة غير صالحة'}));if(!r.ok)throw new Error(d.error||'تعذر الاتصال بالمطبخ');return d};
+const drivers=async()=>{if(!window.db||!window.store?.restaurant?.id)return[];const r=await db.from('drivers').select('id,name,phone,active').eq('restaurant_id',store.restaurant.id).eq('active',true).order('name');if(r.error)throw r.error;return r.data||[]};
+function mount(){if(!location.hash.startsWith('#admin'))return;const main=document.querySelector('#app main');if(!main)return;let card=document.querySelector('#kitchenLiveCard');if(!card){card=document.createElement('section');card.id='kitchenLiveCard';card.className='mt-6 rounded-3xl p-5';card.style.cssText='background:var(--surface);border:1px solid #ffffff1f;box-shadow:0 18px 50px #0005;';main.appendChild(card)};render(card).catch(e=>{card.innerHTML='<div class="font-bold text-red-400">تعذر تحميل المطبخ: '+esc(e.message)+'</div>'})}
+async function render(card){
+  card.innerHTML='<div class="flex items-center justify-between gap-3"><div><div class="text-xs font-bold" style="color:var(--muted)">KITCHEN LIVE</div><h2 class="text-2xl font-extrabold">المطبخ - مباشر</h2></div><button id="kitchenLiveRefresh" type="button" class="rounded-xl border px-4 py-2 font-bold">تحديث</button></div><div id="kitchenLiveRows" class="mt-4 space-y-3"><div style="color:var(--muted)">جارٍ التحميل...</div></div>';
+  const [orders,ds]=await Promise.all([api({action:'list',role:'admin'}),drivers()]);
+  const rows=document.querySelector('#kitchenLiveRows');
+  if(!rows)return;
+  const ordersArr=Array.isArray(orders)?orders:[];
+  const active=ordersArr.filter(o=>['received','preparing','ready'].includes(String(o.kitchen_status||'new')==='new'?'received':String(o.kitchen_status||'new')));
+  if(!active.length){rows.innerHTML='<div class="rounded-2xl p-5" style="background:var(--surface2);color:var(--muted)">لا توجد طلبات مطبخ نشطة.</div>'}
+  else rows.innerHTML=active.map(o=>{
+    const status=String(o.kitchen_status||'new')==='new'?'received':String(o.kitchen_status||'received');
+    const d=Array.isArray(o.delivery_orders)?o.delivery_orders[0]:o.delivery_orders;
+    const label=o.order_type==='dine_in'?(o.table_number?`ترابيزة ${esc(o.table_number)}`:'دخول صالة'):(o.customer_name||'عميل خارجي');
+    const driverOpts=ds.map(x=>`<option value="${esc(x.id)}">${esc(x.name||'مندوب')}</option>`).join('');
+    return `<div class="rounded-2xl p-4" style="background:var(--surface2)"><div class="flex flex-wrap items-center justify-between gap-3"><div><div class="font-extrabold text-lg">#${esc(String(o.id).slice(0,8))}</div><div class="text-sm" style="color:var(--muted)">${label} • ${fmtTime(o.created_at)}</div></div><span class="rounded-full px-3 py-1 text-xs font-extrabold" style="background:${status==='ready'?'#d4af3722':'#ffffff12'};color:${status==='ready'?'var(--brand)':'var(--text)'}">${status}</span></div>${status==='ready'?`<div class="mt-4 flex flex-col sm:flex-row gap-2 items-stretch"><span class="rounded-xl px-3 py-2 text-center font-extrabold" style="background:#d4af3722;color:var(--brand)">جاهز للتعيين</span><select data-kitchen-driver="${esc(o.id)}" class="flex-1 rounded-xl border px-3 py-2"><option value="">اختر سائقًا</option>${driverOpts}</select><button type="button" data-kitchen-assign="${esc(o.id)}" class="rounded-xl px-4 py-2 font-extrabold" style="background:var(--brand);color:#111">تعيين سائق</button></div>${d?.status==='assigned'?`<div class="mt-2 text-sm" style="color:var(--muted)">تم التعيين بالفعل.</div>`:''}`:''}</div>`;
+  }).join('');
+  card.querySelector('#kitchenLiveRefresh')?.addEventListener('click',()=>render(card));
+  card.querySelectorAll('[data-kitchen-assign]').forEach(btn=>btn.addEventListener('click',async()=>{const id=btn.dataset.kitchenAssign;const sel=card.querySelector(`[data-kitchen-driver="${CSS.escape(id)}"]`);if(!sel?.value)return typeof toast==='function'&&toast('اختر سائقًا أولًا');btn.disabled=true;btn.textContent='جارٍ التعيين...';try{await api({action:'assign_driver',order_id:id,driver_id:sel.value});if(typeof toast==='function')toast('تم تعيين السائق وإرسال إشعار الدليفري');await render(card)}catch(e){btn.disabled=false;btn.textContent='تعيين سائق';if(typeof toast==='function')toast(e.message)}}));
+}
+const observer=new MutationObserver(()=>mount());observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('hashchange',()=>setTimeout(mount,100));setInterval(()=>{if(location.hash.startsWith('#admin'))mount()},15000);setTimeout(mount,500);
+})();
