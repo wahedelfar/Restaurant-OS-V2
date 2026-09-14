@@ -1,1 +1,10 @@
-{"$schema":"https://openapi.vercel.sh/vercel.json","alias":["ros-v10.vercel.app"],"rewrites":[]}
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "alias": ["ros-v10.vercel.app"],
+  "rewrites": [
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/", "destination": "/admin/index.html" },
+    { "source": "/kds", "destination": "/kds/index.html" },
+    { "source": "/kds/", "destination": "/kds/index.html" }
+  ]
+}
