@@ -1,9 +1,14 @@
 {
-  "name": "pizza-burger-cafe-egypt",
+  "name": "restaurant-os-v10",
   "private": true,
-  "version": "2.0.0",
-  "description": "Static Egyptian restaurant menu PWA",
   "scripts": {
-    "dev": "npx serve ."
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }
