@@ -24,12 +24,7 @@ button{width:100%;padding:12px;border:none;border-radius:10px;background:#f59e0b
 <div id="login" class="login">
   <div class="card">
     <h1>🔒 مطبخ Live</h1>
-    <div id="cfgBox" class="cfg">
-      <div>ضع بيانات Supabase هنا (مرة واحدة):</div>
-      <input id="sUrl" placeholder="https://xxxx.supabase.co" style="font-size:12px;letter-spacing:0;margin-top:8px">
-      <input id="sKey" placeholder="anon key" style="font-size:12px;letter-spacing:0">
-      <button onclick="saveCfg()" style="background:#334155;color:#fff;margin-top:6px">حفظ الاتصال</button>
-    </div>
+    <div style="font-size:11px;color:#10b981">● Live متصل بـ Supabase</div>
     <input id="pin" type="tel" maxlength="4" placeholder="1234" inputmode="numeric" style="margin-top:12px">
     <button onclick="login()">دخول</button>
     <p id="err" style="color:#ef4444;display:none">PIN غلط</p>
