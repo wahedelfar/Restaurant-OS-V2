@@ -1,7 +1,7 @@
 {
   "version": 2,
   "cleanUrls": true,
-  "alias": ["ros-v1.vercel.app"],
+  "alias": ["ros-v10.vercel.app"],
   "headers": [
     {
       "source": "/(.*)",
@@ -12,5 +12,9 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/kds", "destination": "/public/kds/index.html" },
+    { "source": "/kds/", "destination": "/public/kds/index.html" }
   ]
 }
