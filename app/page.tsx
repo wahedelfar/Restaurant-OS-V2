@@ -1,16 +1,9 @@
-"use client";
-import Link from "next/link";
-export default function Home(){
- return (
-  <main style={{minHeight:"100vh",display:"grid",placeItems:"center",background:"#0a0a0a",color:"white"}}>
-   <div style={{textAlign:"center"}}>
-    <h1 style={{fontSize:40}}>Restaurant OS V10 ✅</h1>
-    <p style={{margin:"20px 0",opacity:0.7}}>Fixed - Root Restored</p>
-    <div style={{display:"flex",gap:12,justifyContent:"center"}}>
-     <Link href="/kitchen" style={{padding:"12px 20px",background:"white",color:"black",borderRadius:8,textDecoration:"none"}}>Kitchen - PIN 1234</Link>
-     <a href="/kds/index.html" style={{padding:"12px 20px",border:"1px solid #333",borderRadius:8,color:"white",textDecoration:"none"}}>KDS Direct</a>
+export default function Home() {
+  return (
+    <div style={{background:"black",color:"white",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"sans-serif"}}>
+      <h1 style={{fontSize:"40px"}}>Restaurant OS V10 - FIXED ✅</h1>
+      <a href="/kitchen" style={{marginTop:20,background:"white",color:"black",padding:"15px 30px",borderRadius:10,textDecoration:"none",fontWeight:"bold"}}>دخول المطبخ - PIN 1234</a>
+      <p style={{marginTop:20,opacity:0.6}}>If you see this, root is working</p>
     </div>
-   </div>
-  </main>
- );
+  )
 }
