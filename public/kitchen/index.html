@@ -3,59 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>المطبخ - Restaurant OS</title>
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#111827">
-<link rel="icon" href="./icon-192.png">
+<title>المطبخ</title>
 <style>
-*{box-sizing:border-box;font-family:system-ui,Tajawal,sans-serif}
+*{box-sizing:border-box;font-family:system-ui}
 body{margin:0;background:#0f172a;color:#fff}
-header{background:#111827;padding:16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f2937}
-.login{height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a}
-.card{background:#1f2937;padding:32px;border-radius:16px;width:340px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}
-input{width:100%;padding:14px;border-radius:10px;border:none;margin:16px 0;font-size:18px;text-align:center;letter-spacing:8px}
-button{width:100%;padding:14px;border:none;border-radius:10px;background:#f59e0b;color:#000;font-weight:700;font-size:16px;cursor:pointer}
+.login{height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#1f2937;padding:32px;border-radius:16px;width:340px;text-align:center}
+input{width:100%;padding:14px;border-radius:10px;border:none;margin:16px 0;font-size:22px;text-align:center;letter-spacing:8px}
+button{width:100%;padding:14px;border:none;border-radius:10px;background:#f59e0b;font-weight:700;cursor:pointer}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px}
 .col{background:#1e293b;border-radius:12px;min-height:80vh;padding:10px}
-.col h2{font-size:16px;margin:8px;text-align:center;padding-bottom:8px;border-bottom:1px solid #334155}
-.order{background:#fff;color:#000;border-radius:10px;padding:10px;margin:8px 0;animation:pop .3s}
-.order.new{border-right:5px solid #ef4444}
-.order.prep{border-right:5px solid #f59e0b}
-.order.ready{border-right:5px solid #10b981}
-.time{font-size:11px;color:#64748b}
-.btns{display:flex;gap:6px;margin-top:8px}
-.btns button{padding:6px;font-size:12px}
+.col h2{font-size:16px;text-align:center;border-bottom:1px solid #334155;padding-bottom:8px}
+.order{background:#fff;color:#000;border-radius:10px;padding:10px;margin:8px 0}
 .hidden{display:none}
-@keyframes pop{from{transform:scale(.9)}to{transform:scale(1)}}
 </style>
 </head>
 <body>
 <div id="login" class="login">
   <div class="card">
     <h1>🔒 مطبخ</h1>
-    <p style="color:#94a3b8">ادخل PIN للدخول</p>
-    <input id="pin" type="password" maxlength="4" placeholder="••••">
-    <button onclick="checkPin()">دخول</button>
-    <p id="err" style="color:#ef4444;display:none;margin-top:10px">PIN غلط</p>
+    <input id="pin" type="tel" maxlength="4" placeholder="1234" inputmode="numeric">
+    <button onclick="login()">دخول</button>
+    <p id="err" style="color:#ef4444;display:none">PIN غلط - جرب 1234</p>
   </div>
 </div>
-
 <div id="app" class="hidden">
-  <header>
-    <div>🍳 <b>مطبخ</b> <span id="count" style="background:#f59e0b;color:#000;padding:2px 8px;border-radius:20px;font-size:12px;margin-right:8px">0</span></div>
-    <div style="display:flex;gap:8px">
-      <button onclick="toggleSound()" id="soundBtn" style="width:auto;padding:6px 12px;background:#334155;color:#fff">🔊 صوت</button>
-      <button onclick="logout()" style="width:auto;padding:6px 12px;background:#1f2937;color:#fff;border:1px solid #334155">خروج</button>
-    </div>
-  </header>
+  <div style="padding:12px;background:#111827;display:flex;justify-content:space-between"><b>🍳 المطبخ شغال</b><button onclick="localStorage.clear();location.reload()" style="width:auto;padding:6px 12px;background:#334155;color:#fff">خروج</button></div>
   <div class="grid">
-    <div class="col" id="col-new"><h2>🔴 جديد</h2><div id="list-new"></div></div>
-    <div class="col" id="col-prep"><h2>🟡 تحضير</h2><div id="list-prep"></div></div>
-    <div class="col" id="col-ready"><h2>🟢 جاهز</h2><div id="list-ready"></div></div>
+    <div class="col"><h2>🔴 جديد</h2><div id="new"></div></div>
+    <div class="col"><h2>🟡 تحضير</h2><div id="prep"></div></div>
+    <div class="col"><h2>🟢 جاهز</h2><div id="ready"></div></div>
   </div>
 </div>
 <audio id="ding" src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3" preload="auto"></audio>
-<script src="./kitchen-config.js"></script>
-<script src="./kitchen.js"></script>
+<script>
+const PIN="1234";
+function login(){
+  const v=document.getElementById('pin').value.trim();
+  console.log('try pin',v);
+  if(v===PIN){localStorage.setItem('kitchen_auth','1');show();}
+  else{document.getElementById('err').style.display='block';}
+}
+function show(){
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  loadOrders();
+}
+function loadOrders(){
+  let orders=[];
+  try{orders=JSON.parse(localStorage.getItem('restaurant_orders')||'[]');}catch{}
+  if(orders.length===0){
+    orders=[{id:'TEST-1',table:5,details:'2 شاورما + بيبسي',state:'new',time:new Date().toLocaleTimeString('ar-EG')}];
+  }
+  document.getElementById('new').innerHTML='';
+  document.getElementById('prep').innerHTML='';
+  document.getElementById('ready').innerHTML='';
+  orders.forEach(o=>{
+    const d=document.createElement('div');d.className='order';
+    d.innerHTML=`<b>#${o.id}</b><br>${o.details||'اوردر'}<br><small>${o.time||''}</small><div style="display:flex;gap:4px;margin-top:6px">
+    ${o.state==='new'?'<button onclick="move(\''+o.id+'\',\'prep\')">تحضير</button>':''}
+    ${o.state==='prep'?'<button onclick="move(\''+o.id+'\',\'ready\')">جاهز</button>':''}
+    </div>`;
+    if(o.state==='new')document.getElementById('new').appendChild(d);
+    else if(o.state==='prep')document.getElementById('prep').appendChild(d);
+    else document.getElementById('ready').appendChild(d);
+  });
+}
+function move(id,s){let os=JSON.parse(localStorage.getItem('restaurant_orders')||'[]');if(os.length===0){os=[{id:id,details:'تيست',state:s,time:''}];}else{os=os.map(o=>o.id==id?{...o,state:s}:o);}localStorage.setItem('restaurant_orders',JSON.stringify(os));loadOrders();document.getElementById('ding').play().catch(()=>{});}
+if(localStorage.getItem('kitchen_auth')==='1')show();
+document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+</script>
 </body>
 </html>
