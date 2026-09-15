@@ -1,1 +1,25 @@
-(function(){'use strict';if(window.__ROS_ADMIN_DRIVER_LEGACY_HIDE_V1__)return;window.__ROS_ADMIN_DRIVER_LEGACY_HIDE_V1__=true;function hide(){if(!(location.hash==='#admin'||location.hash.startsWith('#admin/')))return;document.querySelectorAll('#app #newDriverName').forEach(function(input){var n=input;for(var i=0;i<10&&n&&n!==document.body;i++,n=n.parentElement){if(n.querySelector&&n.querySelector('#newDriverPhone')){var buttons=n.querySelectorAll('button,[role="button"]');var hasAdd=[...buttons].some(function(b){return /إضافة\s*مندوب/.test((b.textContent||'').trim())});if(hasAdd||n.querySelectorAll('input').length>=2){n.style.setProperty('display','none','important');n.setAttribute('data-ros-legacy-driver-add-hidden','1');break}}}}}new MutationObserver(hide).observe(document.body,{childList:true,subtree:true});addEventListener('hashchange',hide);hide()})();
+(function(){
+  'use strict';
+  if(window.__ROS_ADMIN_DRIVER_LEGACY_HIDE_V2__)return;
+  window.__ROS_ADMIN_DRIVER_LEGACY_HIDE_V2__=true;
+  function isAdmin(){return location.hash==='#admin'||location.hash.startsWith('#admin/');}
+  function hideLegacy(){
+    if(!isAdmin())return;
+    ['#newDriverName','#rosName'].forEach(function(nameSel){
+      document.querySelectorAll('#app '+nameSel).forEach(function(input){
+        var row=input.closest('.grid');
+        if(!row)row=input.parentElement;
+        if(!row)return;
+        var phone=row.querySelector('#newDriverPhone,#rosPhone');
+        if(phone){
+          row.style.setProperty('display','none','important');
+          row.setAttribute('data-ros-legacy-driver-add-hidden','1');
+        }
+      });
+    });
+  }
+  function run(){hideLegacy();setTimeout(hideLegacy,50);setTimeout(hideLegacy,250);setTimeout(hideLegacy,1000);}
+  new MutationObserver(run).observe(document.body,{childList:true,subtree:true});
+  addEventListener('hashchange',run);
+  run();
+})();
