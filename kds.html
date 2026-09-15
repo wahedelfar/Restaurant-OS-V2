@@ -165,7 +165,7 @@
               <button data-action="status" data-status="preparing" data-id="${esc(id)}" class="rounded-lg bg-amber-500 hover:bg-amber-400 py-2 px-2 text-xs font-extrabold">جاري التجهيز</button>
               <button data-action="status" data-status="ready" data-id="${esc(id)}" class="rounded-lg bg-emerald-500 hover:bg-emerald-400 py-2 px-2 text-xs font-extrabold">الطلب جاهز</button>
             </div>
-            <button data-action="delete" data-id="${esc(id)}" class="w-full rounded-lg bg-red-600 hover:bg-red-500 text-white py-2 font-extrabold">مسح الأوردر</button>
+            <button data-action="archive" data-id="${esc(id)}" title="إغلاق الطلب من المطبخ فقط" aria-label="إغلاق الطلب" class="w-10 h-10 mx-auto block rounded-full bg-slate-200 hover:bg-red-100 text-slate-700 hover:text-red-600 text-2xl leading-none font-extrabold transition">×</button>
           </div>`;
         root.appendChild(card);
       });
@@ -174,9 +174,18 @@
     async function updateStatus(id,status){
       try{await callApi('POST',{order_id:id,new_status:status});await fetchOrders(false);}catch(e){alert(e.message);}
     }
-    async function deleteOrder(id){
-      if(!confirm('هل تريد مسح الأوردر؟'))return;
-      try{await callApi('DELETE',{order_id:id});await fetchOrders(false);}catch(e){alert(e.message);}
+    async function archiveOrder(id){
+      const card=[...document.querySelectorAll('#orders article')].find(el=>el.querySelector('[data-action="archive"]')?.dataset.id===String(id));
+      const statusText=card?.querySelector('.grid.grid-cols-2')?.textContent||'';
+      if(!statusText.includes('ready')){
+        alert('لا يمكن إغلاق الطلب قبل أن يصبح جاهزًا.');
+        return;
+      }
+      if(!confirm('إغلاق الطلب من لوحة المطبخ فقط؟ سيظل موجودًا في لوحة الإدارة.'))return;
+      try{
+        await callApi('POST',{action:'archive',id});
+        await fetchOrders(false);
+      }catch(e){alert(e.message);}
     }
     function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(()=>fetchOrders(false),2500);}
 
@@ -189,7 +198,7 @@
     $('login').onclick=()=>{if($('pin').value.trim()===PIN){localStorage.setItem('kds_auth','1');showApp();fetchOrders(false);startPolling();}else{$('pinError').classList.remove('hidden');$('pin').value='';$('pin').focus();}};
     $('pin').onkeydown=e=>{if(e.key==='Enter')$('login').click();};
     $('logout').onclick=()=>{localStorage.removeItem('kds_auth');clearInterval(pollTimer);showPin();};
-    $('orders').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='delete')deleteOrder(id);if(b.dataset.action==='status')updateStatus(id,b.dataset.status);});
+    $('orders').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='archive')archiveOrder(id);if(b.dataset.action==='status')updateStatus(id,b.dataset.status);});
 
     (async()=>{const ok=await initSupabase();if(!ok)return;$('supabaseUrl').value=getConfig().url;$('supabaseKey').value=getConfig().key;if(localStorage.getItem('kds_auth')==='1'){showApp();fetchOrders(false);startPolling();}else showPin();})();
   </script>
