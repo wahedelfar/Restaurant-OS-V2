@@ -4,7 +4,7 @@
   "rewrites": [
     { "source": "/admin", "destination": "/admin/index.html" },
     { "source": "/admin/", "destination": "/admin/index.html" },
-    { "source": "/kds", "destination": "/kds/index.html" },
-    { "source": "/kds/", "destination": "/kds/index.html" }
+    { "source": "/kds", "destination": "/kds.html" },
+    { "source": "/kds/", "destination": "/kds.html" }
   ]
 }
