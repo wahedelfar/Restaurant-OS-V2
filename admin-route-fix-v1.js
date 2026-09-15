@@ -6,7 +6,7 @@ const DRIVER_SAVE_KEY='ros_driver_saved_token_v1';
 const DRIVER_BOOT_KEY='ros_driver_boot_routed_v1';
 function text(el){return String(el?.textContent||'').replace(/\s+/g,' ').trim()}
 function path(){return String(location.pathname||'').replace(/\/+$/,'')||'/'}
-function isAdminEntry(){return path()==='/admin'||path()==='/admin/index.html'}
+function isAdminEntry(){const p=path();return p==='/'||p==='/admin'||p==='/admin/index.html'}
 function isTrack(){const h=String(location.hash||'');return /^#track\//i.test(h)||/^#dine-track\//i.test(h)}
 function isDriver(){return /^#driver\//i.test(String(location.hash||''))}
 function isAdmin(){const h=String(location.hash||'');return h==='#admin'||h.startsWith('#admin/')}
@@ -15,7 +15,6 @@ function rememberDriver(){const token=driverToken();if(token)try{localStorage.se
 function enforceAdminIsolation(){if(isAdmin()&&!isAdminEntry()){location.hash='#menu';return true}return false}
 function restoreSavedDriver(){
   if(enforceAdminIsolation())return;
-  // Never hijack public table QR/menu URLs. A saved driver shortcut must not affect ?table=N.
   const hasTable=new URLSearchParams(location.search).has('table');
   if(hasTable)return;
   if(!isDriver()){
