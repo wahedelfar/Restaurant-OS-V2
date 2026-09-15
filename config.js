@@ -1,7 +1,7 @@
 window.APP_CONFIG = {
   mode: 'supabase',
   supabaseUrl: 'https://znnnkoujfuweydvbkejh.supabase.co',
-  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpubm5rb3VqZnV3ZXlkdmJrZWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5ODA4NjQsImV4cCI6MjEwNDU1Njg2NH0.sg_WW8__dL0NO9aqJU2d_9oYmLUIdLb4C1QT1xHecPw',
+  supabaseAnonKey: 'sb_publishable_gjYA4-E-BL0X1hc3YugqyQ_1VaOo_se',
   restaurantSlug: 'pizza-burger',
   publicAppUrl: 'https://ros-v10.vercel.app',
   currency: 'جنيه',
@@ -10,7 +10,6 @@ window.APP_CONFIG = {
     id: 'demo-restaurant',
     name: 'ذا بيتزا برجر كافيه',
     logo: '🍕',
-    whatsapp: '201026569682',
     primary_color: '#111111',
     secondary_color: '#D4AF37'
   },
@@ -29,3 +28,13 @@ window.APP_CONFIG = {
     { id:'p5',category_id:'cat4',name:'بطاطس',description:'بطاطس مقرمشة',price:60,image:'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800',available:true,sort_order:5 }
   ]
 };
+
+// Central Supabase client used by admin enhancements and auxiliary modules.
+// index.html loads @supabase/supabase-js before config.js, so this is created once
+// from the same project URL/key used by the rest of the application.
+if (window.supabase && window.APP_CONFIG.supabaseUrl && window.APP_CONFIG.supabaseAnonKey) {
+  window.rosDb = window.supabase.createClient(
+    window.APP_CONFIG.supabaseUrl,
+    window.APP_CONFIG.supabaseAnonKey
+  );
+}
