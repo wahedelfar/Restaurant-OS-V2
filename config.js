@@ -1,7 +1,7 @@
 window.APP_CONFIG = {
   mode: 'supabase',
   supabaseUrl: 'https://znnnkoujfuweydvbkejh.supabase.co',
-  supabaseAnonKey: 'sb_publishable_gjYA4-E-BL0X1hc3YugqyQ_1VaOo_se',
+  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpubm5rb3VqZnV3ZXlkdmJrZWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5ODA4NjQsImV4cCI6MjEwNDU1Njg2NH0.sg_WW8__dL0NO9aqJU2d_9oYmLUIdLb4C1QT1xHecPw',
   restaurantSlug: 'pizza-burger',
   publicAppUrl: 'https://ros-v10.vercel.app',
   currency: 'جنيه',
@@ -29,12 +29,4 @@ window.APP_CONFIG = {
   ]
 };
 
-// Central Supabase client used by admin enhancements and auxiliary modules.
-// index.html loads @supabase/supabase-js before config.js, so this is created once
-// from the same project URL/key used by the rest of the application.
-if (window.supabase && window.APP_CONFIG.supabaseUrl && window.APP_CONFIG.supabaseAnonKey) {
-  window.rosDb = window.supabase.createClient(
-    window.APP_CONFIG.supabaseUrl,
-    window.APP_CONFIG.supabaseAnonKey
-  );
-}
+// One central client configuration; app.js owns the authenticated runtime client.
