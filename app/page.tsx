@@ -1,3 +1,1 @@
-export default function Page(){
- return <div style={{padding:20,background:'white',color:'black',minHeight:'100vh'}}>تم - الموقع رجع ابيض - جرب /track</div>
-}
+export default function Page(){return <div style={{background:'white',color:'black',minHeight:'100vh',padding:20}}><h1>ROS شغال</h1><a href="/emergency.html">Emergency</a></div>}
