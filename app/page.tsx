@@ -1,5 +1,7 @@
 import MenuClient from './menu-client'
 
+type Modifier = { id: string; product_id: string; name: string; price: number; is_required: boolean }
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://znnnkoujfuweydvbkejh.supabase.co'
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_gjYA4-E-BL0X1hc3YugqyQ_1VaOo_se'
 
@@ -19,7 +21,7 @@ export default async function Home() {
       read('categories', 'id,name', '&order=name.asc'),
       read('subcategories', 'id,name,category_id', '&order=name.asc'),
     ])
-    let modifiers: unknown[] = []
+    let modifiers: Modifier[] = []
     try {
       modifiers = await read('product_modifiers', 'id,product_id,name,price,is_required', '&order=created_at.asc')
     } catch {
