@@ -1,8 +1,9 @@
-export default function Home() {
-  return (
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#000",color:"#fff",fontFamily:"system-ui"}}>
-      <h1 style={{fontSize:40}}>Restaurant OS V10 - WORKING ✅</h1>
-      <a href="/kitchen" style={{marginTop:20,background:"#fff",color:"#000",padding:"14px 28px",borderRadius:10,textDecoration:"none",fontWeight:800}}>دخول المطبخ PIN 1234</a>
-    </div>
-  )
+export default function Page(){
+ return (
+  <div style={{background:'white',color:'black',minHeight:'100vh',padding:20,fontFamily:'Cairo, sans-serif'}}>
+   <h1 style={{fontSize:24,fontWeight:'bold'}}>الموقع رجع!</h1>
+   <p>السودة راحت - 404 دي معناها اننا مسحنا الصفحة السودة.</p>
+   <a href="/track" style={{color:'blue',textDecoration:'underline'}}>جرب صفحة التتبع</a>
+  </div>
+ )
 }
