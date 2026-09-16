@@ -1,6 +1,6 @@
 (async function(){
   try {
-    const url='https://cdn.jsdelivr.net/gh/wahedelfar/Restaurant-OS-V2@main/app.js';
+    const url='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/203bc4419814536338fec340f26826ff98bd1a14/app.js';
     const res=await fetch(url,{cache:'no-store'});
     if(!res.ok) throw new Error('تعذر تحميل محرك الموقع');
     const code=await res.text();
