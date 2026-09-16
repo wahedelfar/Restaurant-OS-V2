@@ -14,49 +14,42 @@
   if(r.error)throw r.error;
   if(!r.data){store={restaurant:null,categories:[],products:[],tables:[],orders:[]};return false}
   store.restaurant=r.data;
-
   const cats=await db.from('categories').select('*').order('name');
   if(cats.error)throw cats.error;
   store.categories=cats.data||[];
-
   const subs=await db.from('subcategories').select('*');
   if(subs.error)throw subs.error;
   const subById=new Map((subs.data||[]).map(s=>[s.id,s]));
-
   const products=await db.from('products_v2').select('*').order('created_at');
   if(products.error)throw products.error;
   store.products=(products.data||[]).map(p=>{
     const sub=subById.get(p.subcategory_id);
     const sizes=Array.isArray(p.sizes)?p.sizes:[];
     const first=sizes[0]||{};
-    return {
-      id:p.id,
-      category_id:sub?.category_id||null,
-      name:p.name,
-      description:p.description||'',
-      price:Number(first.price||0),
-      image_url:p.image_url||p.image||'',
-      available:p.is_available!==false,
-      sort_order:p.sort_order||0,
-      sizes:sizes
-    };
+    return {id:p.id,category_id:sub?.category_id||null,name:p.name,description:p.description||'',price:Number(first.price||0),image_url:p.image_url||p.image||'',available:p.is_available!==false,sort_order:p.sort_order||0,sizes:sizes};
   });
-
   const tables=await db.from('tables').select('*').order('table_number');
   if(tables.error)throw tables.error;
   store.tables=tables.data||[];
-
   const {data:{session}}=await db.auth.getSession();
-  if(session){
-    const o=await db.from('orders').select('*').eq('restaurant_id',r.data.id).order('created_at',{ascending:false}).limit(100);
-    if(o.error)throw o.error;
-    store.orders=o.data||[];
-  }else store.orders=[];
+  if(session){const o=await db.from('orders').select('*').eq('restaurant_id',r.data.id).order('created_at',{ascending:false}).limit(100);if(o.error)throw o.error;store.orders=o.data||[]}else store.orders=[];
   return true
 }`;
 
     code=code.slice(0,start)+patchedLoad+code.slice(end);
     (0,eval)(code);
+
+    // The legacy storefront is only the base shell. These feature layers restore
+    // the production Delivery/GPS/Driver/Customer flow that was added later.
+    const featureScripts=[
+      'delivery-gps-fix.js?v=restore1',
+      'delivery-customer-flow-v1.js?v=restore1',
+      'delivery-admin-dedupe-v1.js?v=restore1'
+    ];
+    await Promise.all(featureScripts.map(src=>new Promise((resolve,reject)=>{
+      if(document.querySelector(`script[src^="${src.split('?')[0]}"]`)){resolve();return;}
+      const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('تعذر تحميل '+src));document.body.appendChild(s);
+    })));
   } catch(e) {
     console.error('ROS legacy app loader failed',e);
     const el=document.getElementById('app');
