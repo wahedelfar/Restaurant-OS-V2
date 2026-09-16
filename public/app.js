@@ -1,6 +1,6 @@
 (async function(){
   try {
-    const url='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/203bc4419814536338fec340f26826ff98bd1a14/app.js';
+    const url='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/f35da203aa2df8a47ce0aba17cc8b675e6d9caa3/app.js';
     const res=await fetch(url,{cache:'no-store'});
     if(!res.ok) throw new Error('تعذر تحميل محرك الموقع');
     let code=await res.text();
@@ -39,19 +39,30 @@
     code=code.slice(0,start)+patchedLoad+code.slice(end);
     (0,eval)(code);
 
-    // The legacy storefront is only the base shell. These feature layers restore
-    // the production Delivery/GPS/Driver/Customer flow that was added later.
+    // Full Restaurant OS V2 feature layer. These files live at repository root,
+    // so load them from raw GitHub instead of relative /public URLs.
+    const base='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/main/';
     const featureScripts=[
-      'delivery-gps-fix.js?v=restore1',
-      'delivery-customer-flow-v1.js?v=restore1',
-      'delivery-admin-dedupe-v1.js?v=restore1'
+      'product-modifiers-v2.js','product-image-upload-v1.js','dine-in-admin-guard-v2.js','cart-bridge.js',
+      'delivery-gps-clean-v2.js','customer-tracking-v2.js','delivery-ui-polish-v1.js','delivery-idempotency-v1.js',
+      'order-modifier-bridge-v1.js','delivery-admin-enhancements.js','driver-photo-field-v2.js','admin-payment-proof-v1.js',
+      'admin-tables-launcher-v1.js','admin-driver-launcher-v1.js','admin-driver-legacy-hide-v1.js','admin-products-launcher-v1.js',
+      'admin-drivers-management-v1.js','admin-action-dock-v1.js','admin-ux-notifications-v1.js','delivery-hardening-v4.js',
+      'driver-app-v1.js','delivery-map-persistence-v1.js','delivery-order-details-v1.js','driver-delivered-button-fix-v1.js',
+      'pwa-install.js','dine-in-v10-fix.js','dine-in-track-router-v1.js','driver-gps-lifecycle-v1.js','kitchen-admin-v1.js',
+      'delivery-gps-fix.js','delivery-customer-flow-v1.js','delivery-admin-dedupe-v1.js'
     ];
-    await Promise.all(featureScripts.map(src=>new Promise((resolve,reject)=>{
-      if(document.querySelector(`script[src^="${src.split('?')[0]}"]`)){resolve();return;}
-      const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('تعذر تحميل '+src));document.body.appendChild(s);
-    })));
+    for(const name of featureScripts){
+      await new Promise((resolve,reject)=>{
+        const s=document.createElement('script');
+        s.src=base+name+'?v=full-v2-1';
+        s.onload=resolve;
+        s.onerror=()=>reject(new Error('تعذر تحميل ميزة '+name));
+        document.body.appendChild(s);
+      });
+    }
   } catch(e) {
-    console.error('ROS legacy app loader failed',e);
+    console.error('ROS full V2 loader failed',e);
     const el=document.getElementById('app');
     if(el) el.innerHTML='<main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f6f6f3;font-family:Cairo,Arial,sans-serif;direction:rtl"><div style="max-width:520px;background:#fff;border-radius:24px;padding:28px;text-align:center;box-shadow:0 10px 40px #0001"><h1 style="font-size:26px;font-weight:800;margin:0 0 10px">تعذر تشغيل الموقع</h1><p style="color:#666;line-height:1.8;margin:0">تعذر تحميل ملفات الموقع الأساسية. أعد المحاولة.</p><button onclick="location.reload()" style="margin-top:18px;background:#111;color:#fff;border:0;border-radius:14px;padding:12px 22px;font-weight:700">إعادة المحاولة</button></div></main>';
   }
