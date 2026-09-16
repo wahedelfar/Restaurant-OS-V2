@@ -3,7 +3,59 @@
     const url='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/203bc4419814536338fec340f26826ff98bd1a14/app.js';
     const res=await fetch(url,{cache:'no-store'});
     if(!res.ok) throw new Error('تعذر تحميل محرك الموقع');
-    const code=await res.text();
+    let code=await res.text();
+
+    // Compatibility patch: the restored legacy UI expects restaurant-scoped
+    // categories/products, while the current database stores menu data in
+    // categories + subcategories + products_v2.
+    const patchedLoad = `async function loadSupabase(){
+  const r=await db.from('restaurants').select('*').eq('slug',C.restaurantSlug).maybeSingle();
+  if(r.error)throw r.error;
+  if(!r.data){store={restaurant:null,categories:[],products:[],tables:[],orders:[]};return false}
+  store.restaurant=r.data;
+
+  const cats=await db.from('categories').select('*').order('name');
+  if(cats.error)throw cats.error;
+  store.categories=cats.data||[];
+
+  const subs=await db.from('subcategories').select('*');
+  if(subs.error)throw subs.error;
+  const subById=new Map((subs.data||[]).map(s=>[s.id,s]));
+
+  const products=await db.from('products_v2').select('*').order('created_at');
+  if(products.error)throw products.error;
+  store.products=(products.data||[]).map(p=>{
+    const sub=subById.get(p.subcategory_id);
+    const sizes=Array.isArray(p.sizes)?p.sizes:[];
+    const first=sizes[0]||{};
+    return {
+      id:p.id,
+      category_id:sub?.category_id||null,
+      name:p.name,
+      description:'',
+      price:Number(first.price||0),
+      image_url:'',
+      available:p.is_available!==false,
+      sort_order:0,
+      sizes:sizes
+    };
+  });
+
+  const tables=await db.from('tables').select('*').order('table_number');
+  if(tables.error)throw tables.error;
+  store.tables=tables.data||[];
+
+  const {data:{session}}=await db.auth.getSession();
+  if(session){
+    const o=await db.from('orders').select('*').eq('restaurant_id',r.data.id).order('created_at',{ascending:false}).limit(100);
+    if(o.error)throw o.error;
+    store.orders=o.data||[];
+  }else store.orders=[];
+  return true
+}`;
+    const re=/async function loadSupabase\(\)\{[\\s\\S]*?\n\}\nfunction showFatal/;
+    if(!re.test(code)) throw new Error('تعذر تطبيق توافق قاعدة البيانات');
+    code=code.replace(re,patchedLoad+'\nfunction showFatal');
     (0,eval)(code);
   } catch(e) {
     console.error('ROS legacy app loader failed',e);
