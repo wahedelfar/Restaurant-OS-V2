@@ -5,10 +5,12 @@
     if(!res.ok) throw new Error('تعذر تحميل محرك الموقع');
     let code=await res.text();
 
-    // Compatibility patch: the restored legacy UI expects restaurant-scoped
-    // categories/products, while the current database stores menu data in
-    // categories + subcategories + products_v2.
-    const patchedLoad = `async function loadSupabase(){
+    // Adapt the restored legacy storefront to the current Supabase menu schema.
+    const start=code.indexOf('async function loadSupabase(){');
+    const end=code.indexOf('\nfunction init(){',start);
+    if(start<0 || end<0) throw new Error('تعذر تحديد محرك تحميل البيانات');
+
+    const patchedLoad=`async function loadSupabase(){
   const r=await db.from('restaurants').select('*').eq('slug',C.restaurantSlug).maybeSingle();
   if(r.error)throw r.error;
   if(!r.data){store={restaurant:null,categories:[],products:[],tables:[],orders:[]};return false}
@@ -32,11 +34,11 @@
       id:p.id,
       category_id:sub?.category_id||null,
       name:p.name,
-      description:'',
+      description:p.description||'',
       price:Number(first.price||0),
-      image_url:'',
+      image_url:p.image_url||p.image||'',
       available:p.is_available!==false,
-      sort_order:0,
+      sort_order:p.sort_order||0,
       sizes:sizes
     };
   });
@@ -53,9 +55,8 @@
   }else store.orders=[];
   return true
 }`;
-    const re=/async function loadSupabase\(\)\{[\\s\\S]*?\n\}\nfunction showFatal/;
-    if(!re.test(code)) throw new Error('تعذر تطبيق توافق قاعدة البيانات');
-    code=code.replace(re,patchedLoad+'\nfunction showFatal');
+
+    code=code.slice(0,start)+patchedLoad+code.slice(end);
     (0,eval)(code);
   } catch(e) {
     console.error('ROS legacy app loader failed',e);
