@@ -64,3 +64,5 @@ The project includes a real service worker, manifest, Apple touch icons, Windows
 - PWA migration clears legacy service workers/caches once and uses v6 cache busting.
 
 V7: Run schema-step6.sql once to enable reliable owner product updates.
+
+<!-- ROS V10 restored to the verified 39530ac application tree. -->
