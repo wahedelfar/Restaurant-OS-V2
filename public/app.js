@@ -5,9 +5,8 @@
     if(!res.ok) throw new Error('تعذر تحميل محرك الموقع');
     let code=await res.text();
 
-    // Adapt the restored legacy storefront to the current Supabase menu schema.
     const start=code.indexOf('async function loadSupabase(){');
-    const end=code.indexOf('\nfunction init(){',start);
+    const end=code.indexOf('\nasync function init(){',start);
     if(start<0 || end<0) throw new Error('تعذر تحديد محرك تحميل البيانات');
 
     const patchedLoad=`async function loadSupabase(){
