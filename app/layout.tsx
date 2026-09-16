@@ -1,3 +1,5 @@
+import LegacyRouteBridge from './legacy-route-bridge'
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
@@ -29,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           main[dir="rtl"]>section:nth-of-type(2) button{border:0!important;background:linear-gradient(135deg,var(--brand),color-mix(in srgb,var(--brand) 65%,white))!important;color:#111!important;font-weight:900!important;border-radius:12px!important;box-shadow:0 8px 24px color-mix(in srgb,var(--brand) 18%,transparent)}
           @media(max-width:700px){main[dir="rtl"]>header{padding:10px 14px!important}main[dir="rtl"]>header h1{font-size:18px!important}main[dir="rtl"]>section:nth-of-type(1){margin:14px 12px 18px!important;padding:24px!important}main[dir="rtl"]>div:nth-of-type(1),main[dir="rtl"]>section:nth-of-type(2){margin-left:12px!important;margin-right:12px!important}main[dir="rtl"]>section:nth-of-type(2){grid-template-columns:1fr!important}}
         `}} />
+        <LegacyRouteBridge />
         {children}
       </body>
     </html>
