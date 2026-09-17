@@ -4,6 +4,11 @@ import LegacyRouteBridge from './legacy-route-bridge'
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body style={{margin:0}}>
         <style dangerouslySetInnerHTML={{__html:`
           :root{--brand:#D4AF37;--bg:#0D0E10;--surface:#17191D;--surface2:#202329;--text:#F6F1E7;--muted:#A9A39A}
