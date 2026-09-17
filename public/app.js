@@ -11,10 +11,13 @@
     const r=await fetch(baseRuntime+'?v='+ts,{cache:'no-store'});
     if(!r.ok) throw new Error('تعذر تحميل محرك الموقع الأساسي ('+r.status+')');
     let code=await r.text();
-    const start=code.indexOf('async function loadSupabase(){');
-    const end=code.indexOf('\nasync function init(){',start);
-    if(start<0||end<0) throw new Error('نسخة محرك الموقع الأساسية غير متوافقة مع الإصلاح الحالي');
-    const patchedLoad=`async function loadSupabase(){
+    let patched=false;
+
+    try{
+      const start=code.indexOf('async function loadSupabase(){');
+      const end=code.indexOf('\nasync function init(){',start);
+      if(start>=0&&end>=0){
+        const patchedLoad=`async function loadSupabase(){
   const r=await db.from('restaurants').select('*').eq('slug',C.restaurantSlug).maybeSingle();
   if(r.error)throw r.error;
   if(!r.data){store={restaurant:null,categories:[],products:[],tables:[],orders:[]};return false}
@@ -35,10 +38,17 @@
   if(session){const o=await db.from('orders').select('*').eq('restaurant_id',r.data.id).order('created_at',{ascending:false}).limit(100);if(o.error)throw o.error;store.orders=o.data||[]}else store.orders=[];
   return true;
 }`;
-    code=code.slice(0,start)+patchedLoad+code.slice(end);
-    code=code.replace(/async function init\(\)\{/,'async function __rosInit(){');
-    code=code.replace(/\ninit\(\);\s*$/,'\n');
-    if(!/async function __rosInit\(\)/.test(code)) throw new Error('تعذر تجهيز دالة تشغيل ROS');
+        code=code.slice(0,start)+patchedLoad+code.slice(end);
+        code=code.replace(/async function init\(\)\{/,'async function __rosInit(){');
+        code=code.replace(/\ninit\(\);\s*$/,'\n');
+        if(/async function __rosInit\(\)/.test(code)){
+          patched=true;
+        }
+      }
+    }catch(e){
+      console.warn('[ROS] Base engine patch failed, running unpatched:', e);
+    }
+
     await new Promise((resolve,reject)=>{
       const s=document.createElement('script');
       s.text=code;
@@ -48,8 +58,9 @@
       document.body.appendChild(s);
       setTimeout(()=>{if(!settled){settled=true;window.removeEventListener('error',onerr);resolve();}},0);
     });
+
     const base='/';
-    const features=['product-modifiers-v2.js','product-image-upload-v1.js','dine-in-admin-guard-v2.js','cart-bridge.js','delivery-gps-clean-v2.js','customer-tracking-v2.js','delivery-ui-polish-v1.js','delivery-idempotency-v1.js','order-modifier-bridge-v1.js','delivery-admin-enhancements.js','driver-photo-field-v2.js','admin-payment-proof-v1.js','admin-tables-launcher-v1.js','admin-driver-launcher-v1.js','admin-driver-legacy-hide-v1.js','admin-products-launcher-v1.js','admin-drivers-management-v1.js','admin-action-dock-v1.js','admin-ux-notifications-v1.js','delivery-hardening-v4.js','driver-app-v1.js','delivery-map-persistence-v1.js','delivery-order-details-v1.js','driver-delivered-button-fix-v1.js','pwa-install.js','daily-offer-v1.js','dine-in-v10-fix.js','dine-in-track-router-v1.js','driver-gps-lifecycle-v1.js','kitchen-admin-v1.js','delivery-gps-fix.js','delivery-customer-flow-v1.js','delivery-admin-dedupe-v1.js'];
+    const features=['pwa-bootstrap-v1.js','product-modifiers-v2.js','product-image-upload-v1.js','dine-in-admin-guard-v2.js','cart-bridge.js','delivery-gps-clean-v2.js','customer-tracking-v2.js','delivery-ui-polish-v1.js','delivery-idempotency-v1.js','order-modifier-bridge-v1.js','delivery-admin-enhancements.js','driver-photo-field-v2.js','admin-payment-proof-v1.js','admin-tables-launcher-v1.js','admin-driver-launcher-v1.js','admin-driver-legacy-hide-v1.js','admin-products-launcher-v1.js','admin-drivers-management-v1.js','admin-action-dock-v1.js','admin-ux-notifications-v1.js','delivery-hardening-v4.js','driver-app-v1.js','delivery-map-persistence-v1.js','delivery-order-details-v1.js','driver-delivered-button-fix-v1.js','pwa-install.js','daily-offer-v1.js','dine-in-v10-fix.js','dine-in-track-router-v1.js','driver-gps-lifecycle-v1.js','kitchen-admin-v1.js','delivery-gps-fix.js','delivery-customer-flow-v1.js','delivery-admin-dedupe-v1.js'];
     for(const name of features){
       try{
         const fr=await fetch(base+name+'?v='+ts,{cache:'no-store'});
@@ -78,7 +89,11 @@
         const fixScript=document.createElement('script');fixScript.text=await fix.text();document.body.appendChild(fixScript);
       }
     }catch(e){ console.warn('fix file skipped', e); }
-    if(typeof window.__rosInit!=='function') throw new Error('محرك ROS تم تحميله لكن دالة التشغيل غير متاحة');
-    await window.__rosInit();
+
+    if(patched && typeof window.__rosInit==='function'){
+      await window.__rosInit();
+    }else if(typeof window.init==='function'){
+      await window.init();
+    }
   }catch(e){fail(e)}
 })();
