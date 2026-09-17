@@ -1,3 +1,4 @@
+import './globals.css'
 import LegacyRouteBridge from './legacy-route-bridge'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
