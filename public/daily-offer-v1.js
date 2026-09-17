@@ -126,10 +126,8 @@
     style();
     if(!(await waitReady()))return;
     if(isAdmin){
-      const offer=await loadOffer();
-      const tryInject=()=>{if(document.getElementById('app')?.children.length)adminCard(offer)};
-      tryInject();
-      const mo=new MutationObserver(()=>adminCard(offer));if(document.body)mo.observe(document.body,{childList:true,subtree:true});
+      // لا تُظهر كارت عرض اليوم تلقائيًا؛ القائمة الجانبية تتحكم في ظهوره وإخفائه.
+      return;
     }else{
       hideOffersCategory();
       const offer=await loadOffer();
