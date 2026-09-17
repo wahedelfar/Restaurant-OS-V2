@@ -7,5 +7,16 @@
     { "source": "/admin/", "destination": "/admin/index.html" },
     { "source": "/kds", "destination": "/kds.html" },
     { "source": "/kds/", "destination": "/kds.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
   ]
 }
