@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "Restaurant OS V2",
+  "short_name": "Restaurant OS",
+  "description": "نظام إدارة المطعم والقائمة الرقمية والطلبات والتوصيل",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "orientation": "portrait-primary",
+  "background_color": "#0D0E10",
+  "theme_color": "#0D0E10",
+  "dir": "rtl",
+  "lang": "ar",
+  "prefer_related_applications": false,
+  "icons": [
+    {"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
