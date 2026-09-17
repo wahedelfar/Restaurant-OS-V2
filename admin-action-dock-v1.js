@@ -40,7 +40,7 @@ if(id==='ros-admin-logout-nav'){if(typeof window.logout==='function')window.logo
 if(id==='ros-admin-orders-nav'||id==='ros-admin-delivery-nav'||id==='ros-admin-dine-nav'||id==='ros-admin-offer-nav'){
 const selectors={orders:'#deleteOrdersBtn',delivery:'#deliveryControlPanel',dine:'#rosV10DinePanel',offer:'#rosDailyOfferAdmin'};
 const key=id.split('-').pop();
-const target=document.querySelector(selectors[key]);
+const target=document.querySelector(selectors[key]) || [...document.querySelectorAll('#app section, #app article, #app div')].find(el=>{const t=(el.textContent||'').replace(/\s+/g,' ');return key==='offer'&&/عرض اليوم/.test(t)});
 if(target){target.scrollIntoView({behavior:'smooth',block:'start'});target.style.outline='2px solid var(--brand)';setTimeout(()=>target.style.outline='',1200);return}
 }
 document.getElementById(id)?.click()
