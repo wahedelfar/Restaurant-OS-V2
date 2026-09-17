@@ -217,7 +217,10 @@ async function saveProduct(id){
     const saved=id?store.products.find(x=>x.id===id):store.products.find(x=>x.name===data.name&&Number(x.price)===data.price);
     if(id&&(!saved||saved.name!==data.name||Number(saved.price)!==data.price))throw new Error('لم يتم تأكيد حفظ التعديل من قاعدة البيانات');
     closeProductEditor();
-    await renderAdmin();
+    // بعد نجاح الحفظ والرفع: أغلق محرر المنتج وارجع للواجهة الرئيسية لعرض الصورة الجديدة فورًا.
+    await loadSupabase();
+    location.hash='#menu';
+    renderRouter();
     toast('تم حفظ المنتج بنجاح');
   }catch(e){console.error('saveProduct',e);toast('تعذر حفظ المنتج: '+(e?.message||'خطأ غير معروف'))}
   finally{if(btn){btn.disabled=false;btn.textContent='حفظ';btn.style.opacity=''}}
