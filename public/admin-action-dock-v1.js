@@ -37,12 +37,30 @@ const id=b.dataset.target;
 if(id==='ros-drivers-management'){openDrivers();return}
 if(id==='ros-admin-menu-nav'){location.hash='#menu';return}
 if(id==='ros-admin-logout-nav'){if(typeof window.logout==='function')window.logout();return}
-if(id==='ros-admin-orders-nav'||id==='ros-admin-delivery-nav'||id==='ros-admin-dine-nav'||id==='ros-admin-offer-nav'){
-const selectors={orders:'#deleteOrdersBtn',delivery:'#deliveryControlPanel',dine:'#rosV10DinePanel',offer:'#rosDailyOfferAdmin'};
-const key=id.split('-').pop();
-if(key==='offer'){const target=document.querySelector('#ros-daily-offer-admin');if(target){window.__ROS_HIDE_DAILY_OFFER__?.();return}if(typeof window.__ROS_SHOW_DAILY_OFFER__==='function'){window.__ROS_SHOW_DAILY_OFFER__();return}}
-const target=document.querySelector(selectors[key]) || [...document.querySelectorAll('#app section, #app article, #app div')].find(el=>{const t=(el.textContent||'').replace(/\s+/g,' ');return key==='offer'&&/عرض اليوم/.test(t)});
-if(target){target.scrollIntoView({behavior:'smooth',block:'start'});target.style.outline='2px solid var(--brand)';setTimeout(()=>target.style.outline='',1200);return}
+if(id==='ros-admin-offer-nav'){
+  const target=document.querySelector('#ros-daily-offer-admin');
+  if(target){window.__ROS_HIDE_DAILY_OFFER__?.();return}
+  if(typeof window.__ROS_SHOW_DAILY_OFFER__==='function'){window.__ROS_SHOW_DAILY_OFFER__();return}
+  return;
+}
+const directTarget={
+  'ros-admin-orders-nav':'#deleteOrdersBtn',
+  'ros-admin-delivery-nav':'#deliveryControlPanel',
+  'ros-admin-dine-nav':'#rosV10DinePanel'
+}[id];
+if(directTarget){
+  const el=document.querySelector(directTarget);
+  const panel=el?.closest('section')||el;
+  if(panel){
+    const oldParent=panel.parentElement,oldNext=panel.nextSibling;
+    const overlay=document.createElement('div');overlay.id='ros-admin-feature-modal';overlay.style.cssText='position:fixed;inset:0;z-index:2147483643;background:#000b;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+    const box=document.createElement('div');box.style.cssText='width:min(1100px,100%);max-height:94vh;overflow:auto;background:var(--surface,#17191d);color:var(--text,#f6f1e7);border:1px solid #ffffff18;border-radius:24px;padding:16px;box-shadow:0 30px 100px #000b';
+    const close=document.createElement('button');close.type='button';close.textContent='إغلاق';close.style.cssText='position:sticky;top:0;z-index:2;float:left;border:1px solid #ffffff20;background:#ffffff10;color:inherit;border-radius:12px;padding:8px 14px;font-weight:900;cursor:pointer';
+    box.appendChild(close);box.appendChild(panel);overlay.appendChild(box);document.body.appendChild(overlay);
+    const restore=()=>{if(panel.parentElement===box){if(oldNext&&oldNext.parentNode===oldParent)oldParent.insertBefore(panel,oldNext);else oldParent.appendChild(panel)}overlay.remove()};
+    close.onclick=restore;overlay.addEventListener('click',e=>{if(e.target===overlay)restore()});
+    return;
+  }
 }
 document.getElementById(id)?.click()
 })}items.forEach(x=>{if(!['ros-drivers-management','ros-admin-orders-nav','ros-admin-delivery-nav','ros-admin-dine-nav','ros-admin-offer-nav','ros-admin-menu-nav','ros-admin-logout-nav'].includes(x.id))hideOriginal(x.id)})}
