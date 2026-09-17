@@ -1,3 +1,4 @@
+// PWA_ICON_DEPLOY=43
 const CACHE_NAME='restaurant-os-v2-shell-v43';
 const SHELL=[
   './','./index.html','./manifest.json','./icon.svg','./icon-180.png','./icon-192.svg','./icon-512.svg',
