@@ -4,10 +4,11 @@
   window.__ROS_DAILY_OFFER_V1__=true;
   const TABLE='restaurant_daily_offers';
   const RESTAURANT_ID='02da399f-b12d-480b-bf53-5491bbe8f9e5';
-  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const esc=s=>String(s??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
   const money=n=>typeof window.money==='function'?window.money(n):`${Number(n||0).toFixed(0)} جنيه`;
-  const getDb=()=>{try{return window.db||null}catch(_){return null}};
-  const getStore=()=>{try{return window.store||null}catch(_){return null}};
+  const getDb=()=>{try{return typeof db!=='undefined'&&db?db:null}catch(_){return null}};
+  const getStore=()=>{try{return typeof store!=='undefined'&&store?store:null}catch(_){return null}};
+  const getCart=()=>{try{return typeof cart!=='undefined'&&Array.isArray(cart)?cart:null}catch(_){return null}};
   const isAdmin=/\/admin(?:\/|$)/i.test(location.pathname);
 
   function style(){
@@ -44,8 +45,8 @@
   }
 
   async function loadOffer(){
-    const db=getDb();if(!db)return null;
-    const r=await db.from(TABLE).select('restaurant_id,product_ids,offer_text,active,updated_at').eq('restaurant_id',RESTAURANT_ID).maybeSingle();
+    const client=getDb();if(!client)return null;
+    const r=await client.from(TABLE).select('restaurant_id,product_ids,offer_text,active,updated_at').eq('restaurant_id',RESTAURANT_ID).maybeSingle();
     if(r.error){console.warn('[ROS daily offer] load',r.error);return null}
     return r.data||null;
   }
@@ -62,8 +63,9 @@
 
   function closeModal(){document.getElementById('ros-daily-offer-modal')?.classList.remove('show')}
 
-  function addOfferToCart(products,offerText){
-    if(!Array.isArray(window.cart)){toast?.('تعذر الوصول إلى سلة التسوق');return}
+  function addOfferToCart(products){
+    const cartRef=getCart();
+    if(!cartRef){toast?.('تعذر الوصول إلى سلة التسوق');return}
     const added=[];
     for(const p of products){
       const base=Number(p.price)||0;
@@ -71,9 +73,9 @@
       const size=sizes[0]?.size||null;
       const required=(p.modifiers||[]).filter(m=>m.is_required);
       if(required.length)continue;
-      const item=window.cart.find(x=>String(x.id)===String(p.id)&&(!x.modifiers||!x.modifiers.length));
+      const item=cartRef.find(x=>String(x.id)===String(p.id)&&(!x.modifiers||!x.modifiers.length));
       if(item){item.qty=(Number(item.qty)||0)+1}
-      else window.cart.push({id:p.id,name:p.name,price:base,base_price:base,qty:1,modifiers:[],size:size});
+      else cartRef.push({id:p.id,name:p.name,price:base,base_price:base,qty:1,modifiers:[],size:size});
       added.push(p.name);
     }
     if(typeof updateCart==='function')updateCart();
@@ -92,7 +94,7 @@
     document.body.appendChild(modal);
     modal.querySelector('.ros-offer-close').addEventListener('click',closeModal);
     modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
-    modal.querySelector('.ros-offer-add').addEventListener('click',()=>addOfferToCart(products,offer.offer_text));
+    modal.querySelector('.ros-offer-add').addEventListener('click',()=>addOfferToCart(products));
     requestAnimationFrame(()=>modal.classList.add('show'));
   }
 
@@ -106,8 +108,8 @@
     (getStore()?.products||[]).filter(p=>p.available!==false).sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar')).forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=`${p.name} — ${money(p.price)}`;if((offer?.product_ids||[]).some(id=>String(id)===String(p.id)))o.selected=true;select.appendChild(o)});
     host.querySelector('#ros-daily-offer-text').value=offer?.offer_text||'';
     const status=host.querySelector('#ros-daily-offer-status');status.textContent=offer?.active?'العرض ظاهر للعملاء':'العرض مخفي';
-    host.querySelector('#ros-daily-offer-save').addEventListener('click',async()=>{const ids=[...select.selectedOptions].map(o=>o.value);const text=host.querySelector('#ros-daily-offer-text').value.trim();if(!ids.length)return toast?.('اختر منتجًا واحدًا على الأقل');if(!text)return toast?.('اكتب نص العرض أولًا');const b=host.querySelector('#ros-daily-offer-save');b.disabled=true;try{const db=getDb();const r=await db.from(TABLE).upsert({restaurant_id:RESTAURANT_ID,product_ids:ids,offer_text:text,active:true,updated_at:new Date().toISOString()},{onConflict:'restaurant_id'});if(r.error)throw r.error;status.textContent='العرض ظاهر للعملاء';toast?.('تم حفظ عرض اليوم');sessionStorage.removeItem('ros_daily_offer_seen_v1')}catch(e){console.error('[ROS daily offer] save',e);toast?.('تعذر حفظ العرض: '+(e?.message||'خطأ'))}finally{b.disabled=false}});
-    host.querySelector('#ros-daily-offer-disable').addEventListener('click',async()=>{const db=getDb();if(!db)return;const r=await db.from(TABLE).upsert({restaurant_id:RESTAURANT_ID,product_ids:[],offer_text:'',active:false,updated_at:new Date().toISOString()},{onConflict:'restaurant_id'});if(r.error)return toast?.('تعذر إخفاء العرض');status.textContent='العرض مخفي';toast?.('تم إخفاء عرض اليوم')});
+    host.querySelector('#ros-daily-offer-save').addEventListener('click',async()=>{const ids=[...select.selectedOptions].map(o=>o.value);const text=host.querySelector('#ros-daily-offer-text').value.trim();if(!ids.length)return toast?.('اختر منتجًا واحدًا على الأقل');if(!text)return toast?.('اكتب نص العرض أولًا');const b=host.querySelector('#ros-daily-offer-save');b.disabled=true;try{const client=getDb();const r=await client.from(TABLE).upsert({restaurant_id:RESTAURANT_ID,product_ids:ids,offer_text:text,active:true,updated_at:new Date().toISOString()},{onConflict:'restaurant_id'});if(r.error)throw r.error;status.textContent='العرض ظاهر للعملاء';toast?.('تم حفظ عرض اليوم');sessionStorage.removeItem('ros_daily_offer_seen_v1')}catch(e){console.error('[ROS daily offer] save',e);toast?.('تعذر حفظ العرض: '+(e?.message||'خطأ'))}finally{b.disabled=false}});
+    host.querySelector('#ros-daily-offer-disable').addEventListener('click',async()=>{const client=getDb();if(!client)return;const r=await client.from(TABLE).upsert({restaurant_id:RESTAURANT_ID,product_ids:[],offer_text:'',active:false,updated_at:new Date().toISOString()},{onConflict:'restaurant_id'});if(r.error)return toast?.('تعذر إخفاء العرض');status.textContent='العرض مخفي';toast?.('تم إخفاء عرض اليوم')});
   }
 
   async function boot(){
