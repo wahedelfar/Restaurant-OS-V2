@@ -4,58 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0D0E10">
-<link rel="manifest" href="../manifest.json?v=22">
+<link rel="manifest" href="../manifest.json?v=24">
 <link rel="icon" type="image/svg+xml" href="../icon.svg?v=24">
 <link rel="shortcut icon" type="image/svg+xml" href="../icon.svg?v=24">
 <link rel="apple-touch-icon" href="../icon.svg?v=24">
+<link rel="mask-icon" href="../icon.svg?v=24" color="#0D0E10">
 <title>Restaurant OS — لوحة الإدارة</title>
+<script>if(location.hash!=='#admin')location.hash='#admin';</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{--brand:#D4AF37;--bg:#0D0E10;--surface:#17191D;--surface2:#202329;--text:#F6F1E7;--muted:#A9A39A}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Cairo,sans-serif;background:var(--bg);color:var(--text)}
-.bg-white{background:var(--surface)!important;color:var(--text)!important}.bg-gray-100,.bg-gray-50{background:var(--surface2)!important;color:var(--text)!important}
-.text-gray-500,.text-gray-600,.text-gray-700{color:var(--muted)!important}.border,.border-b,.border-t,.border-gray-200{border-color:#ffffff1f!important}
-input,textarea,select{background:var(--surface)!important;color:var(--text)!important;border-color:#ffffff24!important}.shadow-xl{box-shadow:0 24px 70px #0008!important}
-</style>
+<style>html,body{margin:0;min-height:100%;background:#0D0E10}*{box-sizing:border-box}</style>
 </head>
 <body>
-<div id="app"></div><div id="toast"></div>
+<div id="app"></div>
+<div id="toast"></div>
 <script src="../config.js?v=4"></script>
 <script src="../app.js?v=13"></script>
-<script src="../product-modifiers-v2.js?v=1"></script>
-<script src="../product-image-upload-v1.js?v=2"></script>
-<script src="../dine-in-admin-guard-v2.js?v=1"></script>
-<script src="../cart-bridge.js?v=3"></script>
-<script src="../delivery-gps-clean-v2.js?v=3"></script>
-<script src="../customer-tracking-v2.js?v=7"></script>
-<script src="../delivery-ui-polish-v1.js?v=1"></script>
-<script src="../delivery-idempotency-v1.js?v=1"></script>
-<script src="../order-modifier-bridge-v1.js?v=1"></script>
-<script src="../delivery-admin-enhancements.js?v=5"></script>
-<script src="../driver-photo-field-v2.js?v=3"></script>
-<script src="../admin-payment-proof-v1.js?v=5"></script>
-<script src="../admin-tables-launcher-v1.js?v=4"></script>
-<script src="../admin-driver-launcher-v1.js?v=2"></script>
-<script src="../admin-driver-legacy-hide-v1.js?v=2"></script>
-<script src="../admin-products-launcher-v1.js?v=5"></script>
-<script src="../admin-drivers-management-v1.js?v=4"></script>
-<script src="../admin-ux-notifications-v1.js?v=3"></script>
-<script src="../delivery-hardening-v4.js?v=3"></script>
-<script src="../driver-app-v1.js?v=5"></script>
-<script src="../delivery-map-persistence-v1.js?v=3"></script>
-<script src="../delivery-order-details-v1.js?v=3"></script>
-<script src="../driver-delivered-button-fix-v1.js?v=1"></script>
-<script src="../pwa-install.js?v=12"></script>
-<script src="../dine-in-v10-fix.js?v=2"></script>
-<script src="../dine-in-track-router-v1.js?v=1"></script>
-<script src="../driver-gps-lifecycle-v1.js?v=1"></script>
-<script src="../admin-route-fix-v1.js?v=5"></script>
-<script src="../kitchen-admin-v1.js?v=3"></script>
-<script src="../daily-offer-v1.js?v=1"></script>
-<script src="../ui-cleanups-v1.js?v=1"></script>
-<script src="../ros-realtime-notifications-v1.js?v=1"></script>
 </body>
 </html>
