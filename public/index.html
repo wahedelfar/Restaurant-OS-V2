@@ -9,12 +9,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Restaurant OS">
 <link rel="manifest" href="/manifest.json?v=22">
-<link rel="icon" type="image/svg+xml" href="/icon.svg?v=22">
-<link rel="shortcut icon" type="image/svg+xml" href="/icon.svg?v=22">
-<link rel="apple-touch-icon" href="/icon.svg?v=22">
-<link rel="mask-icon" href="/icon.svg?v=22" color="#0D0E10">
+<link rel="icon" type="image/svg+xml" href="/icon.svg?v=24">
+<link rel="shortcut icon" type="image/svg+xml" href="/icon.svg?v=24">
+<link rel="apple-touch-icon" href="/icon.svg?v=24">
+<link rel="mask-icon" href="/icon.svg?v=24" color="#0D0E10">
 <title>ذا بيتزا برجر كافيه</title>
-<script defer src="/pwa-bootstrap-v1.js?v=23"></script>
+<script defer src="/pwa-bootstrap-v1.js?v=24"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -25,21 +25,35 @@
 <div id="app"></div>
 <div id="toast"></div>
 <script src="config.js?v=4"></script>
-<script>
-(function(){
-  const palettes={
-    '#D4AF37':['#D4AF37','#0D0E10','#17191D','#202329','#F6F1E7','#A9A39A'],
-    '#3BB78F':['#3BB78F','#071311','#101D1A','#172824','#F1F7F3','#A7B8B1'],
-    '#C85C62':['#C85C62','#160B0D','#241316','#31191D','#FFF2F1','#BDA8A9'],
-    '#6D8CFF':['#6D8CFF','#080D18','#121A2A','#19233A','#F1F4FF','#AAB4CC'],
-    '#B58A52':['#B58A52','#17130E','#231D15','#30271B','#FFF8EC','#C7B9A3'],
-    '#B07BE8':['#B07BE8','#110B18','#1D1428','#281B38','#FAF3FF','#BBAAC7']
-  };
-  function apply(c){c=String(c||'').toUpperCase();const p=palettes[c]||palettes['#D4AF37'];['--brand','--bg','--surface','--surface2','--text','--muted'].forEach((k,i)=>document.documentElement.style.setProperty(k,p[i]));document.documentElement.style.background=p[1];document.body.style.background=p[1];document.body.style.color=p[4];const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=p[1];}
-  try{if(window.APP_CONFIG&&window.supabase&&APP_CONFIG.supabaseUrl&&APP_CONFIG.supabaseAnonKey){const client=window.supabase.createClient(APP_CONFIG.supabaseUrl,APP_CONFIG.supabaseAnonKey);client.from('restaurants').select('primary_color').eq('slug',APP_CONFIG.restaurantSlug).maybeSingle().then(function(r){if(r&&r.data&&r.data.primary_color)apply(r.data.primary_color);});}}catch(e){console.warn('theme bootstrap skipped',e);}
-})();
-</script>
 <script src="app.js?v=13"></script>
+<script src="product-modifiers-v2.js?v=1"></script>
+<script src="product-image-upload-v1.js?v=2"></script>
+<script src="dine-in-admin-guard-v2.js?v=1"></script>
+<script src="cart-bridge.js?v=3"></script>
+<script src="delivery-gps-clean-v2.js?v=3"></script>
+<script src="customer-tracking-v2.js?v=7"></script>
+<script src="delivery-ui-polish-v1.js?v=1"></script>
+<script src="delivery-idempotency-v1.js?v=1"></script>
+<script src="order-modifier-bridge-v1.js?v=1"></script>
+<script src="delivery-admin-enhancements.js?v=5"></script>
+<script src="driver-photo-field-v2.js?v=3"></script>
+<script src="admin-payment-proof-v1.js?v=5"></script>
+<script src="admin-tables-launcher-v1.js?v=4"></script>
+<script src="admin-driver-launcher-v1.js?v=2"></script>
+<script src="admin-driver-legacy-hide-v1.js?v=2"></script>
+<script src="admin-products-launcher-v1.js?v=5"></script>
+<script src="admin-drivers-management-v1.js?v=4"></script>
+<script src="admin-action-dock-v1.js?v=4"></script>
+<script src="admin-ux-notifications-v1.js?v=3"></script>
+<script src="delivery-hardening-v4.js?v=3"></script>
+<script src="driver-app-v1.js?v=5"></script>
+<script src="delivery-map-persistence-v1.js?v=3"></script>
+<script src="delivery-order-details-v1.js?v=3"></script>
+<script src="driver-delivered-button-fix-v1.js?v=1"></script>
+<script src="dine-in-v10-fix.js?v=2"></script>
+<script src="dine-in-track-router-v1.js?v=1"></script>
+<script src="driver-gps-lifecycle-v1.js?v=1"></script>
+<script src="kitchen-admin-v1.js?v=3"></script>
 <script src="daily-offer-v1.js?v=1"></script>
 <script src="ui-cleanups-v1.js?v=1"></script>
 <script src="ros-realtime-notifications-v1.js?v=1"></script>
