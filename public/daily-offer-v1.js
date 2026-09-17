@@ -112,6 +112,16 @@
     host.querySelector('#ros-daily-offer-disable').addEventListener('click',async()=>{const client=getDb();if(!client)return;const r=await client.from(TABLE).upsert({restaurant_id:RESTAURANT_ID,product_ids:[],offer_text:'',active:false,updated_at:new Date().toISOString()},{onConflict:'restaurant_id'});if(r.error)return toast?.('تعذر إخفاء العرض');status.textContent='العرض مخفي';toast?.('تم إخفاء عرض اليوم')});
   }
 
+  window.__ROS_SHOW_DAILY_OFFER__=async function(){
+    if(!isAdmin)return;
+    style();
+    if(!(await waitReady()))return;
+    const offer=await loadOffer();
+    adminCard(offer);
+    document.getElementById('ros-daily-offer-admin')?.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  window.__ROS_HIDE_DAILY_OFFER__=function(){document.getElementById('ros-daily-offer-admin')?.remove()};
+
   async function boot(){
     style();
     if(!(await waitReady()))return;
