@@ -47,10 +47,11 @@
       document.body.appendChild(s);
       setTimeout(()=>{if(!settled){settled=true;window.removeEventListener('error',onerr);resolve();}},0);
     });
-    const base='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/7364c7fd05d6fe10ee096d9625b5357a8145618d/';
+    const featureCommit='f4b720ddaaac5cd4c26e23e62d9ec8f79e32f19b';
+    const base='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/'+featureCommit+'/';
     const features=['product-modifiers-v2.js','product-image-upload-v1.js','dine-in-admin-guard-v2.js','cart-bridge.js','delivery-gps-clean-v2.js','customer-tracking-v2.js','delivery-ui-polish-v1.js','delivery-idempotency-v1.js','order-modifier-bridge-v1.js','delivery-admin-enhancements.js','driver-photo-field-v2.js','admin-payment-proof-v1.js','admin-tables-launcher-v1.js','admin-driver-launcher-v1.js','admin-driver-legacy-hide-v1.js','admin-products-launcher-v1.js','admin-drivers-management-v1.js','admin-action-dock-v1.js','admin-ux-notifications-v1.js','delivery-hardening-v4.js','driver-app-v1.js','delivery-map-persistence-v1.js','delivery-order-details-v1.js','driver-delivered-button-fix-v1.js','pwa-install.js','dine-in-v10-fix.js','dine-in-track-router-v1.js','driver-gps-lifecycle-v1.js','kitchen-admin-v1.js','delivery-gps-fix.js','delivery-customer-flow-v1.js','delivery-admin-dedupe-v1.js'];
     for(const name of features){
-      const fr=await fetch(base+name+'?v=7364c7',{cache:'no-store'});
+      const fr=await fetch(base+name+'?v='+featureCommit,{cache:'no-store'});
       if(!fr.ok) throw new Error('تعذر تحميل ملف الميزة '+name+' ('+fr.status+')');
       const text=await fr.text();
       await new Promise((resolve,reject)=>{
