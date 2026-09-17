@@ -63,6 +63,9 @@
         setTimeout(()=>{if(!settled){settled=true;window.removeEventListener('error',onerr);resolve();}},0);
       });
     }
+    const fix=await fetch('/delivery-submit-fix-v1.js?v=1',{cache:'no-store'});
+    if(!fix.ok)throw new Error('تعذر تحميل إصلاح إرسال طلب التوصيل ('+fix.status+')');
+    const fixScript=document.createElement('script');fixScript.text=await fix.text();document.body.appendChild(fixScript);
     if(typeof window.__rosInit!=='function') throw new Error('محرك ROS تم تحميله لكن دالة التشغيل غير متاحة');
     await window.__rosInit();
   }catch(e){fail(e)}
