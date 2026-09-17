@@ -6,7 +6,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "portrait-primary",
   "background_color": "#0D0E10",
   "theme_color": "#0D0E10",
@@ -14,6 +14,6 @@
   "lang": "ar",
   "prefer_related_applications": false,
   "icons": [
-    {"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+    {"src":"/icon.svg?v=20","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
   ]
 }
