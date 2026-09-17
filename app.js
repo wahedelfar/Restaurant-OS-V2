@@ -34,7 +34,15 @@ async function loadSupabase(){
   if(r.error)throw r.error;
   if(!r.data){store={restaurant:null,categories:[],products:[],tables:[],orders:[]};return false}
   store.restaurant=r.data;
-  for(const k of ['categories','products','tables']){const q=await db.from(k).select('*').eq('restaurant_id',r.data.id).order(k==='tables'?'table_number':'sort_order');if(q.error)throw q.error;store[k]=q.data||[]}
+  const cats=await db.from('categories').select('*').eq('restaurant_id',r.data.id).order('sort_order');
+  if(cats.error)throw cats.error;
+  store.categories=cats.data||[];
+  const products=await db.from('products_v2').select('*').eq('restaurant_id',r.data.id).order('created_at');
+  if(products.error)throw products.error;
+  store.products=(products.data||[]).map(p=>{const sizes=Array.isArray(p.sizes)?p.sizes:[];const first=sizes[0]||{};return {id:p.id,name:p.name,description:p.description||'',price:Number(first.price||0),image_url:p.image_url||'',available:p.is_available!==false,sort_order:p.sort_order||0,sizes,category_id:null,restaurant_id:p.restaurant_id};});
+  const tables=await db.from('tables').select('*').eq('restaurant_id',r.data.id).order('table_number');
+  if(tables.error)throw tables.error;
+  store.tables=tables.data||[];
   const {data:{session}}=await db.auth.getSession();
   if(session){const o=await db.from('orders').select('*').eq('restaurant_id',r.data.id).order('created_at',{ascending:false}).limit(100);if(o.error)throw o.error;store.orders=o.data||[]}else store.orders=[];
   return true
@@ -191,39 +199,26 @@ async function saveProduct(id){
   const btn=$('#saveProductBtn');
   const existing=id?store.products.find(x=>x.id===id):null;
   if(!store.restaurant)return toast('بيانات المطعم غير متاحة');
-  const data={name:$('#pn')?.value.trim()||'',description:$('#pd')?.value.trim()||'',price:Number($('#pp')?.value||0),image_url:$('#pi')?.value.trim()||'',category_id:$('#pc')?.value||null,available:$('#pa')?.checked!==false,sort_order:existing?.sort_order||store.products.length+1,restaurant_id:store.restaurant.id};
+  const data={name:$('#pn')?.value.trim()||'',description:$('#pd')?.value.trim()||'',price:Number($('#pp')?.value||0),image_url:$('#pi')?.value.trim()||'',category_id:$('#pc')?.value||null,available:$('#pa')?.checked!==false};
   if(!data.name||!Number.isFinite(data.price)||data.price<=0)return toast('أدخل الاسم والسعر بشكل صحيح');
   if(!db)return toast('لوحة الإدارة تحتاج اتصال Supabase');
   const {data:{session}}=await db.auth.getSession();
   if(!session)return toast('انتهت جلسة الإدارة — سجل الدخول مرة أخرى');
+  if(!id)return toast('إضافة منتج جديد تحتاج اختيار قسم فرعي في الكتالوج الحالي');
   if(btn){btn.disabled=true;btn.textContent='جارٍ الحفظ...';btn.style.opacity='.65'}
   try{
-    if(id){
-      const r=await db.rpc('owner_update_product',{p_id:id,p_name:data.name,p_description:data.description,p_price:data.price,p_image_url:data.image_url,p_category_id:data.category_id,p_available:data.available,p_sort_order:data.sort_order});
-      if(r.error)throw r.error;
-    }else{
-      const duplicateCheck=await db.from('products').select('id,name').eq('restaurant_id',data.restaurant_id);
-      if(duplicateCheck.error)throw duplicateCheck.error;
-      const normalizedName=data.name.toLowerCase();
-      const duplicate=(duplicateCheck.data||[]).some(p=>String(p.name||'').trim().toLowerCase()===normalizedName);
-      if(duplicate){toast('يوجد منتج بنفس الاسم بالفعل');return;}
-      const r=await db.from('products').insert(data);
-      if(r.error){
-        if(r.error.code==='23505'){toast('يوجد منتج بنفس الاسم بالفعل');return;}
-        throw r.error;
-      }
-    }
+    const sizes=Array.isArray(existing?.sizes)&&existing.sizes.length?existing.sizes.map(x=>({...x})):[{size:'واحد',price:data.price}];
+    sizes[0]={...sizes[0],price:data.price};
+    const r=await db.rpc('owner_update_product_v2',{p_id:id,p_restaurant_id:store.restaurant.id,p_name:data.name,p_description:data.description,p_price:data.price,p_image_url:data.image_url,p_category_id:data.category_id,p_available:data.available,p_sizes:sizes});
+    if(r.error)throw r.error;
     await loadSupabase();
-    const saved=id?store.products.find(x=>x.id===id):store.products.find(x=>x.name===data.name&&Number(x.price)===data.price);
-    if(id&&(!saved||saved.name!==data.name||Number(saved.price)!==data.price))throw new Error('لم يتم تأكيد حفظ التعديل من قاعدة البيانات');
+    const saved=store.products.find(x=>x.id===id);
+    if(!saved||saved.name!==data.name||saved.image_url!==data.image_url)throw new Error('لم يتم تأكيد حفظ بيانات المنتج من قاعدة البيانات');
     closeProductEditor();
-    // بعد نجاح الحفظ والرفع: أغلق محرر المنتج وارجع للواجهة الرئيسية لعرض الصورة الجديدة فورًا.
-    await loadSupabase();
-    location.hash='#menu';
-    renderRouter();
+    renderAdmin();
     toast('تم حفظ المنتج بنجاح');
   }catch(e){console.error('saveProduct',e);toast('تعذر حفظ المنتج: '+(e?.message||'خطأ غير معروف'))}
-  finally{if(btn){btn.disabled=false;btn.textContent='حفظ';btn.style.opacity=''}}
+  finally{if(btn){btn.disabled=false;btn.textContent='حفظ التعديل';btn.style.opacity=''}}
 }
 async function delProduct(id){
   if(!confirm('حذف المنتج؟'))return;
