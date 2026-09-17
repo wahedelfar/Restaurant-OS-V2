@@ -1,7 +1,10 @@
 (async function(){
   try {
-    const url='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/f35da203aa2df8a47ce0aba17cc8b675e6d9caa3/app.js';
-    const res=await fetch(url,{cache:'no-store'});
+    // Load the known-good base runtime, but DO NOT let it initialize yet.
+    // The V2 feature layer must be installed first because several feature
+    // scripts patch router/checkout/admin/delivery behavior at load time.
+    const baseRuntime='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/f35da203aa2df8a47ce0aba17cc8b675e6d9caa3/app.js';
+    const res=await fetch(baseRuntime,{cache:'no-store'});
     if(!res.ok) throw new Error('تعذر تحميل محرك الموقع');
     let code=await res.text();
 
@@ -37,11 +40,16 @@
 }`;
 
     code=code.slice(0,start)+patchedLoad+code.slice(end);
+
+    // The historical runtime ends with init();. Remove that eager call so
+    // feature patches are installed before the first render/router pass.
+    code=code.replace(/\ninit\(\);\s*$/,'\n');
+
+    // Evaluate base runtime first so feature scripts can safely reference its
+    // functions/globals, but it will remain dormant until all patches load.
     (0,eval)(code);
 
-    // Full Restaurant OS V2 feature layer. These files live at repository root,
-    // so load them from raw GitHub instead of relative /public URLs.
-    const base='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/main/';
+    const base='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/7364c7fd05d6fe10ee096d9625b5357a8145618d/';
     const featureScripts=[
       'product-modifiers-v2.js','product-image-upload-v1.js','dine-in-admin-guard-v2.js','cart-bridge.js',
       'delivery-gps-clean-v2.js','customer-tracking-v2.js','delivery-ui-polish-v1.js','delivery-idempotency-v1.js',
@@ -55,12 +63,17 @@
     for(const name of featureScripts){
       await new Promise((resolve,reject)=>{
         const s=document.createElement('script');
-        s.src=base+name+'?v=full-v2-1';
+        s.src=base+name+'?v=7364c7';
         s.onload=resolve;
         s.onerror=()=>reject(new Error('تعذر تحميل ميزة '+name));
         document.body.appendChild(s);
       });
     }
+
+    // All V2 patches are now installed. Start the application exactly once.
+    if(typeof window.init==='function') await window.init();
+    else if(typeof init==='function') await init();
+    else throw new Error('محرك التشغيل لم يجهز دالة init');
   } catch(e) {
     console.error('ROS full V2 loader failed',e);
     const el=document.getElementById('app');
