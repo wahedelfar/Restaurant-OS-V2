@@ -9,7 +9,7 @@
   const getDb=()=>{try{return typeof db!=='undefined'&&db?db:null}catch(_){return null}};
   const getStore=()=>{try{return typeof store!=='undefined'&&store?store:null}catch(_){return null}};
   const getCart=()=>{try{return typeof cart!=='undefined'&&Array.isArray(cart)?cart:null}catch(_){return null}};
-  const isAdmin=/\/admin(?:\/|$)/i.test(location.pathname);
+  const isAdmin=location.hash==='#admin'||location.hash.startsWith('#admin/');
 
   function style(){
     if(document.getElementById('ros-daily-offer-style'))return;
