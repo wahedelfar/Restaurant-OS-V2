@@ -6,15 +6,11 @@
   const MAX_WIDTH=1200;
   const QUALITY=.82;
   const BUCKET='product-images';
+  const RESTAURANT_ID='02da399f-b12d-480b-bf53-5491bbe8f9e5';
   const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
   function restaurantId(){
-    try{
-      if(typeof store!=='undefined'){
-        const id=String(store?.restaurant?.id||'').trim();
-        if(UUID_RE.test(id))return id;
-      }
-    }catch(_){ }
+    if(UUID_RE.test(RESTAURANT_ID))return RESTAURANT_ID;
     throw new Error('تعذر تحديد معرف المطعم الصحيح');
   }
 
