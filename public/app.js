@@ -10,11 +10,9 @@
     const r=await fetch(baseRuntime,{cache:'no-store'});
     if(!r.ok) throw new Error('تعذر تحميل محرك الموقع الأساسي ('+r.status+')');
     let code=await r.text();
-
     const start=code.indexOf('async function loadSupabase(){');
     const end=code.indexOf('\nasync function init(){',start);
     if(start<0||end<0) throw new Error('نسخة محرك الموقع الأساسية غير متوافقة مع الإصلاح الحالي');
-
     const patchedLoad=`async function loadSupabase(){
   const r=await db.from('restaurants').select('*').eq('slug',C.restaurantSlug).maybeSingle();
   if(r.error)throw r.error;
@@ -37,11 +35,9 @@
   return true;
 }`;
     code=code.slice(0,start)+patchedLoad+code.slice(end);
-
     code=code.replace(/async function init\(\)\{/,'async function __rosInit(){');
     code=code.replace(/\ninit\(\);\s*$/,'\n');
     if(!/async function __rosInit\(\)/.test(code)) throw new Error('تعذر تجهيز دالة تشغيل ROS');
-
     await new Promise((resolve,reject)=>{
       const s=document.createElement('script');
       s.text=code;
@@ -51,7 +47,6 @@
       document.body.appendChild(s);
       setTimeout(()=>{if(!settled){settled=true;window.removeEventListener('error',onerr);resolve();}},0);
     });
-
     const base='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/7364c7fd05d6fe10ee096d9625b5357a8145618d/';
     const features=['product-modifiers-v2.js','product-image-upload-v1.js','dine-in-admin-guard-v2.js','cart-bridge.js','delivery-gps-clean-v2.js','customer-tracking-v2.js','delivery-ui-polish-v1.js','delivery-idempotency-v1.js','order-modifier-bridge-v1.js','delivery-admin-enhancements.js','driver-photo-field-v2.js','admin-payment-proof-v1.js','admin-tables-launcher-v1.js','admin-driver-launcher-v1.js','admin-driver-legacy-hide-v1.js','admin-products-launcher-v1.js','admin-drivers-management-v1.js','admin-action-dock-v1.js','admin-ux-notifications-v1.js','delivery-hardening-v4.js','driver-app-v1.js','delivery-map-persistence-v1.js','delivery-order-details-v1.js','driver-delivered-button-fix-v1.js','pwa-install.js','dine-in-v10-fix.js','dine-in-track-router-v1.js','driver-gps-lifecycle-v1.js','kitchen-admin-v1.js','delivery-gps-fix.js','delivery-customer-flow-v1.js','delivery-admin-dedupe-v1.js'];
     for(const name of features){
@@ -68,24 +63,7 @@
         setTimeout(()=>{if(!settled){settled=true;window.removeEventListener('error',onerr);resolve();}},0);
       });
     }
-
     if(typeof window.__rosInit!=='function') throw new Error('محرك ROS تم تحميله لكن دالة التشغيل غير متاحة');
     await window.__rosInit();
-
-    // Restore the real storefront icon without relying on missing PNG files.
-    document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach(x=>x.remove());
-    const favicon=document.createElement('link');
-    favicon.rel='icon'; favicon.type='image/svg+xml'; favicon.href='/icon.svg?v=10';
-    document.head.appendChild(favicon);
-    const appleIcon=document.createElement('link');
-    appleIcon.rel='apple-touch-icon'; appleIcon.href='/icon.svg?v=10';
-    document.head.appendChild(appleIcon);
-
-    // Load the current PWA installer only if the pinned feature layer did not already create it.
-    if(!document.getElementById('pwa-install')){
-      const pwa=document.createElement('script');
-      pwa.src='/pwa-install.js?v=10';
-      document.body.appendChild(pwa);
-    }
   }catch(e){fail(e)}
 })();
