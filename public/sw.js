@@ -1,6 +1,6 @@
-const CACHE_NAME='restaurant-os-v2-shell-v42';
+const CACHE_NAME='restaurant-os-v2-shell-v43';
 const SHELL=[
-  './','./index.html','./manifest.json','./icon.svg','./icon-180.png',
+  './','./index.html','./manifest.json','./icon.svg','./icon-180.png','./icon-192.svg','./icon-512.svg',
   './config.js?v=4','./app.js?v=13','./pwa-bootstrap-v1.js?v=25','./pwa-install.js?v=13',
   './daily-offer-v1.js?v=1','./ui-cleanups-v1.js?v=1','./ros-realtime-notifications-v1.js?v=1'
 ];
