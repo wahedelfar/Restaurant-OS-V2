@@ -38,14 +38,10 @@
 }`;
     code=code.slice(0,start)+patchedLoad+code.slice(end);
 
-    // Convert the historical eager init() into an exported function.
     code=code.replace(/async function init\(\)\{/,'async function __rosInit(){');
     code=code.replace(/\ninit\(\);\s*$/,'\n');
     if(!/async function __rosInit\(\)/.test(code)) throw new Error('تعذر تجهيز دالة تشغيل ROS');
 
-    // Execute as a real classic script, not indirect eval. This is critical:
-    // the base runtime declares C/db/store/functions at global script scope and
-    // the V2 feature scripts must be able to access those globals.
     await new Promise((resolve,reject)=>{
       const s=document.createElement('script');
       s.text=code;
@@ -75,5 +71,21 @@
 
     if(typeof window.__rosInit!=='function') throw new Error('محرك ROS تم تحميله لكن دالة التشغيل غير متاحة');
     await window.__rosInit();
+
+    // Restore the real storefront icon without relying on missing PNG files.
+    document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach(x=>x.remove());
+    const favicon=document.createElement('link');
+    favicon.rel='icon'; favicon.type='image/svg+xml'; favicon.href='/icon.svg?v=10';
+    document.head.appendChild(favicon);
+    const appleIcon=document.createElement('link');
+    appleIcon.rel='apple-touch-icon'; appleIcon.href='/icon.svg?v=10';
+    document.head.appendChild(appleIcon);
+
+    // Load the current PWA installer only if the pinned feature layer did not already create it.
+    if(!document.getElementById('pwa-install')){
+      const pwa=document.createElement('script');
+      pwa.src='/pwa-install.js?v=10';
+      document.body.appendChild(pwa);
+    }
   }catch(e){fail(e)}
 })();
