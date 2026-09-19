@@ -73,6 +73,7 @@
     if(!app||!window.db) return;
     app.innerHTML=`<main class="min-h-screen luxury-page p-4"><div class="max-w-2xl mx-auto pt-8"><div class="lux-card rounded-3xl p-6"><div class="flex justify-between items-center gap-3"><div><div class="eyebrow">ORDER TRACKING</div><h1 class="text-3xl font-extrabold">تتبع طلبك</h1></div><button onclick="location.hash='menu'" class="rounded-xl border px-4 py-2">القائمة</button></div><div id="trackBox" class="mt-6">جارٍ تحميل الطلب...</div></div></div></main>`;
     let timer=null;
+    let realtime=null;
     async function load(){
       const r=await db.rpc('public_track_order',{p_token:token});
       const box=document.querySelector('#trackBox');
@@ -100,6 +101,26 @@
     }
     load();
     timer=setInterval(load,5000);
+    try{
+      if(window.db?.channel){
+        realtime=window.db.channel('ros-customer-track-'+String(token))
+          .on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders',filter:'tracking_token=eq.'+token},()=>load())
+          .on('postgres_changes',{event:'UPDATE',schema:'public',table:'delivery_orders'},()=>load())
+          .on('postgres_changes',{event:'INSERT',schema:'public',table:'driver_locations',filter:'order_id=eq.'+token},()=>load())
+          .subscribe();
+      }
+    }catch(e){console.warn('customer realtime unavailable',e)}
+    const stopRealtime=()=>{
+      if(realtime&&window.db?.removeChannel){try{window.db.removeChannel(realtime)}catch(_){}}
+      realtime=null;
+    };
+    window.addEventListener('hashchange',function cleanupCustomerRealtime(){
+      if(!location.hash.startsWith('#track/')){
+        if(timer)clearInterval(timer);
+        stopRealtime();
+        window.removeEventListener('hashchange',cleanupCustomerRealtime);
+      }
+    },{once:true});
   }
 
   function handleRoute(){
