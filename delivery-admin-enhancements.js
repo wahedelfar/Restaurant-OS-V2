@@ -28,22 +28,7 @@
     }
   }
 
-  // Assignment button only. Driver selection itself is isolated below so no page/router
-  // event can cancel or navigate away from the control.
-  document.addEventListener('click',function(e){
-    const button=e.target?.closest?.('#deliveryControlPanel [data-assign]');
-    if(!button)return;
-    const panel=button.closest('#deliveryControlPanel');
-    if(!panel)return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    const orderId=String(button.dataset.assign||'');
-    const assignSelect=Array.from(panel.querySelectorAll('select[data-sel]')).find(x=>String(x.dataset.sel||'')===orderId);
-    if(!assignSelect)return;
-    assignDelivery(orderId,String(assignSelect.value||''),button,assignSelect,panel);
-  },true);
-
+  // Assignment is handled centrally by delivery-hardening-v4.js.
   function isolateSelect(select){
     if(!select||select.dataset.rosIsolated==='1')return;
     const options=[...select.options].map(o=>({value:String(o.value||''),text:o.textContent||''}));
