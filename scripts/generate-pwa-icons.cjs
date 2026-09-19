@@ -2,17 +2,20 @@ const fs=require('fs');const zlib=require('zlib');
 function u32(b,o){return b.readUInt32BE(o)}
 function paeth(a,b,c){const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);return pa<=pb?a:pb<=pc?b:c}
 function decodePNG(buf){
-  let p=8,w,h,bd,ct,idat=[];
+  let p=8,w,h,bd,ct,interlace=0,idat=[],plte=null,trns=null;
   while(p<buf.length){
     const n=u32(buf,p),t=buf.toString('ascii',p+4,p+8),d=buf.subarray(p+8,p+8+n);
     p+=12+n;
-    if(t==='IHDR'){w=u32(d,0);h=u32(d,4);bd=d[8];ct=d[9]}
+    if(t==='IHDR'){w=u32(d,0);h=u32(d,4);bd=d[8];ct=d[9];interlace=d[12]}
+    if(t==='PLTE')plte=Buffer.from(d);
+    if(t==='tRNS')trns=Buffer.from(d);
     if(t==='IDAT')idat.push(d);
     if(t==='IEND')break
   }
-  if(buf.readUInt32BE(0)!==0x89504e47||bd!==8||![2,6].includes(ct))
-    throw Error('public/icon-180.png must be an 8-bit RGB or RGBA PNG');
-  const bpp=ct===6?4:3,row=w*bpp;
+  if(buf.readUInt32BE(0)!==0x89504e47||bd!==8||![2,3,6].includes(ct)||interlace!==0)
+    throw Error('public/icon-180.png must be a non-interlaced 8-bit RGB, indexed, or RGBA PNG');
+  if(ct===3&&(!plte||plte.length<3||plte.length%3))throw Error('Indexed PNG is missing a valid PLTE palette');
+  const bpp=ct===6?4:ct===2?3:1,row=w*bpp;
   const raw=zlib.inflateSync(Buffer.concat(idat)),out=Buffer.alloc(h*w*4);
   let ro=0,prev=Buffer.alloc(row);
   for(let y=0;y<h;y++){
@@ -23,7 +26,12 @@ function decodePNG(buf){
     }
     for(let x=0;x<w;x++){
       const si=x*bpp,di=(y*w+x)*4;
-      out[di]=cur[si];out[di+1]=cur[si+1];out[di+2]=cur[si+2];out[di+3]=ct===6?cur[si+3]:255
+      if(ct===3){
+        const pi=cur[si]*3;
+        out[di]=plte[pi]??0;out[di+1]=plte[pi+1]??0;out[di+2]=plte[pi+2]??0;out[di+3]=trns&&cur[si]<trns.length?trns[cur[si]]:255;
+      }else{
+        out[di]=cur[si];out[di+1]=cur[si+1];out[di+2]=cur[si+2];out[di+3]=ct===6?cur[si+3]:255;
+      }
     }
     prev=cur
   }
