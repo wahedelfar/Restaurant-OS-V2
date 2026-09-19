@@ -6,21 +6,27 @@
   <title>إدارة المطبخ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="manifest" href="/kds/manifest.json?v=1" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png?v=3" />
+  <meta name="theme-color" content="#0D0E10" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <style>body{font-family:'Cairo',sans-serif}.hidden{display:none!important}</style>
 </head>
 <body class="bg-slate-950 text-white min-h-screen">
-  <div id="configScreen" class="min-h-screen flex items-center justify-center p-4">
+  <div id="configScreen" class="hidden min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
       <h1 class="text-2xl font-extrabold mb-2">إدارة المطبخ</h1>
-      <p class="text-slate-400 mb-6">أدخل بيانات Supabase مرة واحدة. سيتم حفظها محليًا على هذا الجهاز.</p>
-      <label class="block text-sm font-bold mb-2">Supabase URL</label>
-      <input id="supabaseUrl" type="url" autocomplete="off" placeholder="https://xxxx.supabase.co" class="w-full mb-4 rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 outline-none focus:border-amber-500" />
-      <label class="block text-sm font-bold mb-2">Supabase Publishable/Anon Key</label>
-      <input id="supabaseKey" type="password" autocomplete="off" placeholder="ضع المفتاح هنا" class="w-full mb-4 rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 outline-none focus:border-amber-500" />
-      <button id="saveConfig" class="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3">حفظ وتشغيل</button>
+      <p class="text-slate-400 mb-6">هذه الشاشة التقنية لم تعد مطلوبة.</p>
+      <label class="hidden">Supabase URL</label>
+      <input id="supabaseUrl" type="hidden" />
+      <label class="hidden">Supabase Publishable/Anon Key</label>
+      <input id="supabaseKey" type="hidden" />
+      <button id="saveConfig" class="hidden">حفظ وتشغيل</button>
       <p id="configError" class="text-red-400 text-sm mt-3 hidden"></p>
     </div>
   </div>
@@ -45,12 +51,14 @@
   </main>
 
   <script>
+    const SUPABASE_URL='https://znnnkoujfuweydvbkejh.supabase.co';
+    const SUPABASE_KEY='sb_publishable_gjYA4-E-BL0X1hc3YugqyQ_1VaOo_se';
     const PIN='1234';
     let supabaseClient=null,initialized=false,lastOrderIds=new Set(),oldCount=0,pollTimer=null,realtimeChannel=null;
     let audioCtx = null;
     const $=id=>document.getElementById(id);
     const esc=v=>String(v??'').replace(/[&<>\'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    const getConfig=()=>({url:localStorage.getItem('supabase_url')||'',key:localStorage.getItem('supabase_key')||''});
+    const getConfig=()=>({url:SUPABASE_URL,key:SUPABASE_KEY});
     const apiBase=()=>getConfig().url.replace(/\/$/,'')+'/functions/v1/kitchen-api';
 
     function initAudio(){
@@ -81,10 +89,8 @@
     function showApp(){$('configScreen').classList.add('hidden');$('pinScreen').classList.add('hidden');$('app').classList.remove('hidden');}
 
     async function initSupabase(){
-      const {url,key}=getConfig();
-      if(!url||!key){showConfig();return false;}
-      try{supabaseClient=window.supabase.createClient(url.trim(),key.trim());initialized=true;return true;}
-      catch(e){$('configError').textContent='بيانات Supabase غير صحيحة.';$('configError').classList.remove('hidden');showConfig();return false;}
+      try{supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);initialized=true;return true;}
+      catch(e){console.error('Supabase init failed',e);$('configError').textContent='تعذر تشغيل خدمة المطبخ.';$('configError').classList.remove('hidden');showPin();return false;}
     }
     async function callApi(method='GET',body=null){
       const options={method,headers:{'Content-Type':'application/json','x-kitchen-pin':PIN}};
@@ -158,13 +164,6 @@
       }catch(e){console.warn('Realtime unavailable',e);}
     }
 
-    $('saveConfig').onclick=async()=>{
-      const url=$('supabaseUrl').value.trim(),key=$('supabaseKey').value.trim();
-      if(!url||!key){$('configError').textContent='أدخل Supabase URL والمفتاح.';$('configError').classList.remove('hidden');return;}
-      localStorage.setItem('supabase_url',url);localStorage.setItem('supabase_key',key);$('configError').classList.add('hidden');
-      initAudio();
-      if(await initSupabase())showPin();
-    };
     async function verifyPin(){
       initAudio();
       if($('pin').value.trim()===PIN){localStorage.setItem('kds_auth','1');await requestNotificationPermission();showApp();await loadOrders();startPolling();startRealtime();}
@@ -174,7 +173,11 @@
     $('pin').onkeydown=e=>{if(e.key==='Enter')verifyPin();};
     $('logout').onclick=()=>{localStorage.removeItem('kds_auth');clearInterval(pollTimer);if(realtimeChannel&&supabaseClient){supabaseClient.removeChannel(realtimeChannel);realtimeChannel=null;}showPin();};
     $('orders').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='archive')archiveOrder(id);else if(b.dataset.action==='ready')readyOrder(id);else if(b.dataset.action==='status')updateStatus(id,b.dataset.status);});
-    (async()=>{const ok=await initSupabase();if(!ok)return;$('supabaseUrl').value=getConfig().url;$('supabaseKey').value=getConfig().key;if(localStorage.getItem('kds_auth')==='1'){initAudio();requestNotificationPermission();showApp();await loadOrders();startPolling();startRealtime();}else showPin();})();
+    (async()=>{
+      if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('/kds/sw.js',{scope:'/kds/'}).catch(()=>{}),{once:true});}
+      const ok=await initSupabase();if(!ok)return;
+      if(localStorage.getItem('kds_auth')==='1'){initAudio();requestNotificationPermission();showApp();await loadOrders();startPolling();startRealtime();}else showPin();
+    })();
   </script>
 </body>
 </html>
