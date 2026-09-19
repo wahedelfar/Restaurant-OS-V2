@@ -49,13 +49,6 @@ function show(){
   button.style.display='flex';
 }
 
-function toast(message){
-  const host=document.getElementById('toast');
-  if(!host){alert(message);return}
-  host.innerHTML='<div class="fixed left-4 bottom-20 z-[2147483000] max-w-[calc(100vw-32px)] rounded-2xl px-4 py-3 bg-black/90 text-white text-sm font-bold shadow-2xl border border-white/10">'+message+'</div>';
-  setTimeout(()=>host.innerHTML='',4000);
-}
-
 function make(){
   if(button)return;
   button=document.createElement('button');
@@ -67,10 +60,7 @@ function make(){
   button.innerHTML='<img src="'+ICON+'" alt="" width="36" height="36"><span>تثبيت التطبيق</span>';
   button.onclick=async()=>{
     if(standalone()){hide();return}
-    if(!deferredPrompt){
-      toast('إذا لم تظهر نافذة التثبيت، افتح قائمة المتصفح ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».');
-      return
-    }
+    if(!deferredPrompt)return;
     const e=deferredPrompt;
     deferredPrompt=null;
     try{
@@ -113,13 +103,12 @@ function init(){
   });
 
   if(window.__ROS_DEFERRED_INSTALL_PROMPT__)show();
-  else show();
 }
 
 window.__ROS_PWA_INSTALL_REFRESH__=function(){
   deferredPrompt=window.__ROS_DEFERRED_INSTALL_PROMPT__||deferredPrompt;
   style();restoreIcons();make();
-  if(standalone())hide();else show();
+  if(standalone())hide();else if(deferredPrompt)show();else hide();
 };
 
 document.readyState==='loading'
