@@ -6,6 +6,9 @@ const SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 
 export default function LegacyCompat({ mode }: { mode: 'track' | 'dine-track' | 'driver' }) {
   useEffect(() => {
+    if (mode === 'driver' && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/driver/sw.js', { scope: '/driver/' }).catch(() => {}), { once: true })
+    }
     const scripts = mode === 'driver'
       ? ['/config.js?v=4', SUPABASE_CDN, '/app.js?v=10', '/delivery-gps-fix.js?v=1', '/delivery-gps-clean-v2.js?v=3', '/driver-app-v1.js?v=5', '/driver-gps-lifecycle-v1.js?v=1', '/driver-delivered-button-fix-v1.js?v=1']
       : ['/config.js?v=4', SUPABASE_CDN, '/app.js?v=10', '/customer-tracking-v2.js?v=7', ...(mode === 'dine-track' ? ['/dine-in-track-router-v1.js?v=1'] : [])]
