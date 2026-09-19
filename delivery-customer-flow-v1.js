@@ -106,7 +106,7 @@
         realtime=window.db.channel('ros-customer-track-'+String(token))
           .on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders',filter:'tracking_token=eq.'+token},()=>load())
           .on('postgres_changes',{event:'UPDATE',schema:'public',table:'delivery_orders'},()=>load())
-          .on('postgres_changes',{event:'INSERT',schema:'public',table:'driver_locations',filter:'order_id=eq.'+token},()=>load())
+           .on('postgres_changes',{event:'INSERT',schema:'public',table:'driver_locations'},()=>load())
           .subscribe();
       }
     }catch(e){console.warn('customer realtime unavailable',e)}
