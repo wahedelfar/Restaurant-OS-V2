@@ -38,16 +38,17 @@ if(id==='ros-vodafone-launcher'){openPanel();return}
 if(id==='ros-drivers-management'){openDrivers();return}
 if(id==='ros-admin-menu-nav'){location.hash='#menu';return}
 if(id==='ros-admin-logout-nav'){if(typeof window.logout==='function')window.logout();return}
-if(id==='ros-admin-orders-nav'||id==='ros-admin-delivery-nav'||id==='ros-admin-dine-nav'||id==='ros-admin-offer-nav'){
-const selectors={orders:'#deleteOrdersBtn',delivery:'#deliveryControlPanel',dine:'#rosV10DinePanel',offer:'#rosDailyOfferAdmin'};
-const key={
-'ros-admin-orders-nav':'orders',
-'ros-admin-delivery-nav':'delivery',
-'ros-admin-dine-nav':'dine',
-'ros-admin-offer-nav':'offer'
-}[id];
-const target=document.querySelector(selectors[key]) || [...document.querySelectorAll('#app section, #app article, #app div')].find(el=>{const t=(el.textContent||'').replace(/\s+/g,' ');return key==='offer'&&/عرض اليوم/.test(t)});
-if(target){target.scrollIntoView({behavior:'smooth',block:'start'});target.style.outline='2px solid var(--brand)';setTimeout(()=>target.style.outline='',1200);return}
+if(id==='ros-admin-offer-nav'){
+  const target=document.querySelector('#ros-daily-offer-admin');
+  if(target){window.__ROS_HIDE_DAILY_OFFER__?.();return}
+  if(typeof window.__ROS_SHOW_DAILY_OFFER__==='function'){window.__ROS_SHOW_DAILY_OFFER__();return}
+  return;
+}
+if(id==='ros-admin-orders-nav'||id==='ros-admin-delivery-nav'||id==='ros-admin-dine-nav'){
+const selectors={orders:'#deleteOrdersBtn',delivery:'#deliveryControlPanel',dine:'#rosV10DinePanel'};
+const key={'ros-admin-orders-nav':'orders','ros-admin-delivery-nav':'delivery','ros-admin-dine-nav':'dine'}[id];
+const target=document.querySelector(selectors[key]);
+if(target){const panel=target.closest('section')||target;panel.scrollIntoView({behavior:'smooth',block:'start');panel.style.outline='2px solid var(--brand)';setTimeout(()=>panel.style.outline='',1200);return}
 }
 document.getElementById(id)?.click()
 })}items.forEach(x=>{if(!['ros-drivers-management','ros-admin-orders-nav','ros-admin-delivery-nav','ros-admin-dine-nav','ros-admin-offer-nav','ros-admin-menu-nav','ros-admin-logout-nav'].includes(x.id))hideOriginal(x.id)})}
