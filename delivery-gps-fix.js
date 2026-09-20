@@ -102,7 +102,7 @@
   // This delivery layer owns only the driver route.
   async function renderDriver(token){
     $('#app').innerHTML=`<main class="min-h-screen luxury-page p-4"><div class="max-w-3xl mx-auto pt-6"><div class="lux-card rounded-3xl p-5"><div class="flex justify-between items-center"><div><div class="eyebrow">DRIVER APP</div><h1 class="text-2xl font-extrabold">لوحة المندوب</h1></div><button onclick="location.hash='menu'" class="rounded-xl border px-4 py-2">خروج</button></div><div id="driverBox" class="mt-5">جارٍ تحميل الطلبات...</div></div></div></main>`;
-    let watch=null,activeOrder=null,lastSent=0;
+    let watch=null,activeOrder=null,lastSent=0,rowsCache=[];
     function stopGps(){if(watch!==null&&navigator.geolocation){navigator.geolocation.clearWatch(watch);watch=null;}activeOrder=null;}
     async function load(){
       const r=await db.rpc('driver_get_orders',{p_token:token});
@@ -110,6 +110,7 @@
       if(!box)return;
       if(r.error){box.innerHTML=`<div class="p-5 rounded-2xl bg-red-500/10">${esc(r.error.message||'رابط المندوب غير صالح')}</div>`;return;}
       const rows=r.data||[];
+      rowsCache=rows;
       if(!rows.length){box.innerHTML='<div class="text-center py-12" style="color:var(--muted)">لا توجد طلبات مسندة إليك حاليًا.</div>';stopGps();return;}
       box.innerHTML=rows.map(o=>`<article class="rounded-2xl p-4 mb-4" style="background:var(--surface2);border:1px solid color-mix(in srgb,var(--text) 10%,transparent)"><div class="flex justify-between gap-3"><div><div class="font-extrabold">طلب #${esc(o.id.slice(0,8))}</div><div class="mt-1">${esc(o.customer_name)} • ${esc(o.customer_phone)}</div></div><span class="px-3 py-1 rounded-full text-xs font-bold" style="background:var(--brand);color:#111">${statusLabel(o.delivery_status)}</span></div><div class="mt-3 text-sm">${esc(o.address)}</div><div class="mt-3 font-extrabold">${money(o.total)}</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4"><button onclick="driverStatus('${esc(o.id)}','accepted')" class="rounded-xl border p-3 font-bold">قبول</button><button onclick="driverStatus('${esc(o.id)}','picked_up')" class="rounded-xl border p-3 font-bold">استلام</button><button onclick="driverStatus('${esc(o.id)}','out_for_delivery')" class="rounded-xl border p-3 font-bold">خرج للتوصيل</button><button onclick="driverStatus('${esc(o.id)}','delivered')" class="rounded-xl p-3 font-bold" style="background:var(--brand);color:#111">تم التسليم</button></div><div class="grid grid-cols-2 gap-2 mt-2"><button type="button" onclick="showCustomerMap('${esc(o.id)}')" class="rounded-xl border p-3 text-center font-bold">موقع العميل</button><button onclick="startDriverGps('${esc(o.id)}')" class="rounded-xl border p-3 font-bold">📍 تشغيل GPS</button></div><div id="gps-${esc(o.id)}" class="mt-2 text-xs" style="color:var(--muted)"></div><div id="customer-map-${esc(o.id)}" class="mt-3 rounded-2xl overflow-hidden" style="height:280px;display:none"></div></article>`).join('');
     }
@@ -119,15 +120,16 @@
       if(status==='delivered')stopGps();
       await load();notify('تم تحديث حالة الطلب');
     };
-    window.showCustomerMap=function(orderId){
-      const row=(rows||[]).find(x=>String(x.id)===String(orderId));
+    window.showCustomerMap=async function(orderId){
+      const row=(rowsCache||[]).find(x=>String(x.id)===String(orderId));
       const lat=Number(row?.customer_lat),lng=Number(row?.customer_lng);
       const el=document.querySelector('#customer-map-'+CSS.escape(String(orderId)));
       if(!el)return;
       if(!Number.isFinite(lat)||!Number.isFinite(lng)){el.style.display='block';el.innerHTML='<div class="h-full grid place-items-center p-4 text-sm" style="color:var(--muted);background:var(--surface2)">لم يتم تسجيل موقع العميل مع الطلب.</div>';return;}
       el.style.display='block';
-      if(!leaflet){el.innerHTML='<div class="h-full grid place-items-center p-4 text-sm" style="color:var(--muted);background:var(--surface2)">تعذر تحميل الخريطة حاليًا.</div>';return;}
+      if(!(await (async()=>{if(window.L)return true;const s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.onload=()=>{};s.onerror=()=>{};document.head.appendChild(s);for(let i=0;i<100&&!window.L;i++)await new Promise(r=>setTimeout(r,100));return !!window.L})()){el.innerHTML='<div class="h-full grid place-items-center p-4 text-sm" style="color:var(--muted);background:var(--surface2)">تعذر تحميل الخريطة حاليًا.</div>';return;}
       if(el.__rosCustomerMap){el.__rosCustomerMap.setView([lat,lng],16);el.__rosCustomerMarker?.setLatLng([lat,lng]);return;}
+      el.innerHTML='';
       const cm=L.map(el).setView([lat,lng],16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(cm);
       const marker=L.marker([lat,lng]).addTo(cm).bindPopup('موقع العميل').openPopup();
