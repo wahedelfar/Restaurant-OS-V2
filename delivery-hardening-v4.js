@@ -7,7 +7,7 @@
   const deliveryAdmin=window.renderAdmin;
   const notify=m=>{try{typeof toast==='function'?toast(m):alert(m)}catch(_){alert(m)}};
   const publicBase=String((window.APP_CONFIG&&window.APP_CONFIG.publicAppUrl)||location.origin).replace(/\/$/,'');
-  const isSpecialRoute=()=>/^#(track|driver)\//.test(location.hash||'');
+  const isSpecialRoute=()=>false; // route rendering is owned by the dedicated tracking/driver layers.
   const routeKind=()=>String(location.hash||'').startsWith('#track/')?'track':String(location.hash||'').startsWith('#driver/')?'driver':null;
   const specialUrl=(kind,token)=>publicBase+'/#'+kind+'/'+encodeURIComponent(token);
   const timeout=(promise,ms,message)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(message)),ms))]);
