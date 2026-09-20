@@ -2,7 +2,7 @@
   'use strict';
   if(window.__ROS_DRIVER_APP_SHIM__)return;
   window.__ROS_DRIVER_APP_SHIM__=true;
-  function isDriver(){return location.hash.startsWith('#driver/');}
+  function isDriver(){const h=location.hash||'';const q=new URLSearchParams(location.search||'');return h.startsWith('#driver/')||location.pathname==='/driver'||location.pathname==='/driver/'||q.has('token');}
   function loadInlineMap(){
     if(!isDriver()||window.__ROS_DRIVER_INLINE_MAP_LOADED__)return;
     window.__ROS_DRIVER_INLINE_MAP_LOADED__=true;
