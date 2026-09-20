@@ -155,6 +155,7 @@
       },function(e){if(target)target.textContent='تعذر تشغيل GPS: '+(e.message||'تم رفض الإذن');},{enableHighAccuracy:true,timeout:20000,maximumAge:3000});
     };
     window.addEventListener('beforeunload',stopGps,{once:true});
+    ensureDriverLeaflet();
     load();
   }
 
