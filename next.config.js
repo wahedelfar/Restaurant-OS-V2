@@ -9,11 +9,11 @@ const nextConfig = {
         },
         {
           source: '/kitchen',
-          destination: '/kitchen/index.html',
+          destination: '/kds/',
         },
         {
           source: '/kitchen/',
-          destination: '/kitchen/index.html',
+          destination: '/kds/',
         },
       ],
     }
