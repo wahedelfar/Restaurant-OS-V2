@@ -9,7 +9,13 @@ export default function LegacyCompat({ mode }: { mode: 'track' | 'dine-track' | 
     if (mode === 'driver' && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('/driver/sw.js', { scope: '/driver/' }).catch(() => {}), { once: true })
     }
-    const scripts = ['/config.js?v=4', SUPABASE_CDN, '/app.js?v=13']
+    const scripts = [
+      '/config.js?v=4',
+      SUPABASE_CDN,
+      '/app.js?v=13',
+      ...(mode === 'track' ? ['/customer-tracking-v2.js?v=8'] : []),
+      ...(mode === 'driver' ? ['/delivery-order-details-v1.js?v=4', '/driver-app-v1.js?v=6'] : []),
+    ]
 
     let cancelled = false
     const load = (src: string) => new Promise<void>((resolve, reject) => {
