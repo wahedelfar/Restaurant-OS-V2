@@ -100,6 +100,8 @@
 
   // Customer tracking is owned exclusively by customer-tracking-v2.js.
   // This delivery layer owns only the driver route.
+  async function ensureDriverLeaflet(){if(window.L)return true;if(!document.querySelector('link[data-ros-driver-leaflet]')){const l=document.createElement('link');l.rel='stylesheet';l.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';l.dataset.rosDriverLeaflet='1';document.head.appendChild(l)}return true}
+
   async function renderDriver(token){
     $('#app').innerHTML=`<main class="min-h-screen luxury-page p-4"><div class="max-w-3xl mx-auto pt-6"><div class="lux-card rounded-3xl p-5"><div class="flex justify-between items-center"><div><div class="eyebrow">DRIVER APP</div><h1 class="text-2xl font-extrabold">لوحة المندوب</h1></div><button onclick="location.hash='menu'" class="rounded-xl border px-4 py-2">خروج</button></div><div id="driverBox" class="mt-5">جارٍ تحميل الطلبات...</div></div></div></main>`;
     let watch=null,activeOrder=null,lastSent=0,rowsCache=[];
