@@ -54,7 +54,8 @@
     const SUPABASE_URL='https://znnnkoujfuweydvbkejh.supabase.co';
     const SUPABASE_KEY='sb_publishable_gjYA4-E-BL0X1hc3YugqyQ_1VaOo_se';
     const PIN='1234';
-    let supabaseClient=null,initialized=false,lastOrderIds=new Set(),oldCount=0,pollTimer=null,realtimeChannel=null;
+    const KDS_RESTAURANT_ID='02da399f-b12d-480b-bf53-5491bbe8f9e5';
+    let supabaseClient=null,initialized=false,lastOrderIds=new Set(),oldCount=0,pollTimer=null,realtimeChannel=null,realtimeRefreshTimer=null,orderCache=new Map();
     let audioCtx = null;
     const $=id=>document.getElementById(id);
     const esc=v=>String(v??'').replace(/[&<>\'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -107,8 +108,11 @@
     async function loadOrders(){
       if(!initialized)return;
       try{
-        const data=await callApi('GET');
-        const orders=(Array.isArray(data)?data:[]).filter(o=>!isClosed(o));
+        const rpc=await supabaseClient.rpc('kds_get_grouped_orders',{p_restaurant_id:KDS_RESTAURANT_ID,p_pin:PIN});
+        if(rpc.error)throw rpc.error;
+        const data=Array.isArray(rpc.data)?rpc.data:[];
+        const orders=data.filter(o=>!isClosed(o));
+        orderCache=new Map(orders.map(o=>[String(o.id),o]));
         const ids=new Set(orders.map(o=>String(o.id)));
         const newOrders=orders.filter(o=>!lastOrderIds.has(String(o.id)));
         if(oldCount>0 && newOrders.length>0){playDing();notifyNewOrder();}
@@ -143,24 +147,29 @@
         root.appendChild(card);
       });
     }
-    async function updateStatus(id,status){try{await callApi('POST',{action:'update_status',order_id:id,new_status:status});await loadOrders();}catch(e){alert(e.message);}}
-    async function readyOrder(id){try{await callApi('POST',{action:'ready',id});await loadOrders();}catch(e){alert(e.message);}}
+    function sourceOrderIds(id){
+      const row=orderCache.get(String(id));
+      return Array.isArray(row?.source_order_ids)&&row.source_order_ids.length?row.source_order_ids:[id];
+    }
+    async function applyKitchenAction(id,action,status){
+      const ids=sourceOrderIds(id);
+      for(const orderId of ids){
+        const body=action==='status'?{action:'update_status',order_id:orderId,new_status:status}:action==='ready'?{action:'ready',id:orderId}:{action:'archive',id:orderId};
+        await callApi('POST',body);
+      }
+    }
+    async function updateStatus(id,status){try{await applyKitchenAction(id,'status',status);await loadOrders();}catch(e){alert(e.message);}}
+    async function readyOrder(id){try{await applyKitchenAction(id,'ready');await loadOrders();}catch(e){alert(e.message);}}
     async function archiveOrder(orderId){
       if(!confirm('هل تريد مسح الأوردر من المطبخ فقط؟'))return;
-      try{
-        const {url,key}=getConfig();
-        const res=await fetch(`${url.replace(/\/$/,'')}/functions/v1/kitchen-api`,{method:'POST',headers:{'Content-Type':'application/json','apikey':key,'Authorization':`Bearer ${key}`,'x-kitchen-pin':PIN},body:JSON.stringify({action:'archive',id:orderId})});
-        const data=await res.json().catch(()=>({}));
-        if(!res.ok)throw new Error(data.error||'فشل مسح الأوردر من المطبخ');
-        await loadOrders();
-      }catch(e){alert(e.message);}
+      try{await applyKitchenAction(orderId,'archive');await loadOrders();}catch(e){alert(e.message);}
     }
     function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(loadOrders,15000);}
     function startRealtime(){
       if(!supabaseClient)return;
       try{
         if(realtimeChannel)supabaseClient.removeChannel(realtimeChannel);
-        realtimeChannel=supabaseClient.channel('kds-orders').on('postgres_changes',{event:'INSERT',schema:'public',table:'orders'},()=>{playDing();loadOrders();}).subscribe();
+        realtimeChannel=supabaseClient.channel('kds-orders').on('postgres_changes',{event:'INSERT',schema:'public',table:'orders'},()=>{clearTimeout(realtimeRefreshTimer);realtimeRefreshTimer=setTimeout(()=>{playDing();loadOrders();},700);}).subscribe();
       }catch(e){console.warn('Realtime unavailable',e);}
     }
 
