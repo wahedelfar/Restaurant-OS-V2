@@ -4,8 +4,8 @@ if(window.__ROS_DRIVER_INLINE_MAP_V3__)return;
 window.__ROS_DRIVER_INLINE_MAP_V3__=true;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
-function isDriver(){return location.hash.startsWith('#driver/');}
-function token(){return decodeURIComponent(location.hash.slice(8));}
+function isDriver(){const h=location.hash||'';const q=new URLSearchParams(location.search||'');return h.startsWith('#driver/')||location.pathname==='/driver'||location.pathname==='/driver/'||q.has('token');}
+function token(){const h=location.hash||'';if(h.startsWith('#driver/'))return decodeURIComponent(h.slice(8));return new URLSearchParams(location.search||'').get('token')||'';}
 function hideInstallButton(){const b=document.querySelector('#pwa-install');if(b){b.classList.remove('ready');b.hidden=true;b.style.display='none';}}
 async function ensureLeaflet(){if(window.L)return true;try{if(!document.querySelector('link[data-ros-inline-leaflet]')){const l=document.createElement('link');l.rel='stylesheet';l.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';l.dataset.rosInlineLeaflet='1';document.head.appendChild(l)}await new Promise((resolve,reject)=>{const old=document.querySelector('script[data-ros-inline-leaflet]');if(old){if(window.L)return resolve();old.addEventListener('load',resolve,{once:true});old.addEventListener('error',reject,{once:true});return}const s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.dataset.rosInlineLeaflet='1';s.onload=resolve;s.onerror=reject;document.body.appendChild(s)});return !!window.L}catch(e){console.warn('Inline Leaflet failed',e);return false}}
 async function getOrder(){try{if(typeof db==='undefined'||!db?.rpc)return null;const r=await db.rpc('driver_get_orders',{p_token:token()});if(r.error){console.warn('driver_get_orders',r.error);return null}const rows=r.data||[];return rows.find(o=>['assigned','accepted','picked_up','out_for_delivery'].includes(o.delivery_status))||rows[0]||null}catch(e){console.warn('Inline customer location',e);return null}}
