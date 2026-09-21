@@ -5,7 +5,7 @@ window.__ROS_TABLE_BILLING_ADMIN_V1__=true;
 let timer=0;
 const esc=v=>typeof window.esc==='function'?window.esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]);
 const money=v=>typeof window.money==='function'?window.money(v):Number(v||0).toFixed(0)+' جنيه';
-function admin(){return location.hash.startsWith('#admin')}
+function admin(){return location.hash.startsWith('#admin')&&window.__ROS_ADMIN_READY__===true}
 function panel(){return document.getElementById('rosTableBillingAdmin')}
 async function load(){
   if(!admin()||!window.db||!window.store?.restaurant?.id)return;
