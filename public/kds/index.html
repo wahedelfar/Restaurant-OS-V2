@@ -153,10 +153,9 @@
     }
     async function applyKitchenAction(id,action,status){
       const ids=sourceOrderIds(id);
-      for(const orderId of ids){
-        const body=action==='status'?{action:'update_status',order_id:orderId,new_status:status}:action==='ready'?{action:'ready',id:orderId}:{action:'archive',id:orderId};
-        await callApi('POST',body);
-      }
+      const r=await supabaseClient.rpc('kds_update_orders',{p_restaurant_id:KDS_RESTAURANT_ID,p_pin:PIN,p_order_ids:ids,p_action:action,p_status:status||null});
+      if(r.error)throw r.error;
+      return r;
     }
     async function updateStatus(id,status){try{await applyKitchenAction(id,'status',status);await loadOrders();}catch(e){alert(e.message);}}
     async function readyOrder(id){try{await applyKitchenAction(id,'ready');await loadOrders();}catch(e){alert(e.message);}}
