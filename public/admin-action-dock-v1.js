@@ -15,7 +15,7 @@ const items=[
 {id:'ros-admin-menu-nav',label:'فتح المنيو',icon:'<svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/></svg>'},
 {id:'ros-admin-logout-nav',label:'تسجيل الخروج',icon:'<svg viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M9 12h9"/></svg>'}
 ];
-function admin(){return (location.hash==='#admin'||location.hash.startsWith('#admin/'))&&window.__ROS_ADMIN_READY__===true}
+function admin(){return location.hash==='#admin'||location.hash.startsWith('#admin/')}
 function style(){if(document.getElementById('ros-admin-dock-style'))return;const s=document.createElement('style');s.id='ros-admin-dock-style';s.textContent=`
 #ros-admin-action-dock{position:fixed;right:0;top:78px;bottom:14px;width:52px;z-index:2147483640;display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px 4px;font-family:Cairo,Arial,sans-serif;pointer-events:none;background:linear-gradient(180deg,#17191df8,#111216f8);border:1px solid #ffffff12;border-right:0;border-radius:22px 0 0 22px;box-shadow:0 18px 55px #0009;backdrop-filter:blur(18px);transform:translate3d(calc(100% - 52px),0,0);transition:transform .22s ease;will-change:transform}
 #ros-admin-action-dock.open{width:270px;transform:translate3d(0,0,0)}
