@@ -11,8 +11,17 @@
     s.onerror=()=>{console.warn('Driver inline map failed to load');window.__ROS_DRIVER_INLINE_MAP_LOADED__=false};
     document.body.appendChild(s);
   }
-  function dedupeDriverLabels(){
+  function dedupeDriverUi(){
     if(!isDriver())return;
+    const canonical=document.querySelector('#rosDriverBox');
+    if(canonical){
+      document.querySelectorAll('#driverBox').forEach(el=>el.remove());
+      const boxes=[...document.querySelectorAll('#rosDriverBox')];
+      boxes.slice(1).forEach(el=>el.remove());
+    }
+    // The old profile-polish layer is decorative only and could be injected repeatedly
+    // by legacy cached runtimes. Remove it from the canonical driver route.
+    document.querySelectorAll('#ros-driver-profile').forEach(el=>el.remove());
     const root=document.querySelector('#rosDriverBox')||document.querySelector('#app');if(!root)return;
     let kept=false;
     [...root.querySelectorAll('*')].forEach(el=>{
@@ -23,8 +32,8 @@
       el.setAttribute('aria-hidden','true');
     });
   }
-  function boot(){setTimeout(loadInlineMap,100);setTimeout(dedupeDriverLabels,150);setTimeout(dedupeDriverLabels,500);setTimeout(dedupeDriverLabels,1200)}
+  function boot(){setTimeout(loadInlineMap,100);setTimeout(dedupeDriverUi,120);setTimeout(dedupeDriverUi,400);setTimeout(dedupeDriverUi,1000)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  window.addEventListener('hashchange',()=>{setTimeout(loadInlineMap,100);setTimeout(dedupeDriverLabels,150);setTimeout(dedupeDriverLabels,500);setTimeout(dedupeDriverLabels,1200)});
-  new MutationObserver(()=>{if(isDriver()){dedupeDriverLabels();loadInlineMap()}}).observe(document.body,{childList:true,subtree:true});
+  window.addEventListener('hashchange',()=>{setTimeout(loadInlineMap,100);setTimeout(dedupeDriverUi,150);setTimeout(dedupeDriverUi,500);setTimeout(dedupeDriverUi,1200)});
+  new MutationObserver(()=>{if(isDriver()){dedupeDriverUi();loadInlineMap()}}).observe(document.body,{childList:true,subtree:true});
 })();
