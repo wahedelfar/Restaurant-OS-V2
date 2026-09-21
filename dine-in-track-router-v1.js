@@ -11,7 +11,7 @@ function dineToken(){const h=String(location.hash||'');if(!/^#dine-track\//i.tes
 async function waitDb(){for(let i=0;i<150;i++){if(window.db)return true;await new Promise(r=>setTimeout(r,100))}return false}
 function rpcTimeout(promise,label,ms=20000){return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' استغرق وقتًا أطول من المتوقع')),ms))])}
 async function showTableBill(table,trackingToken){
-  if(!window.db||!table||!guestToken)return;
+  if(!window.db||!table||!trackingToken)return;
   const app=document.querySelector('#app');if(!app)return;
   app.innerHTML='<main class="min-h-screen luxury-page p-4"><div class="max-w-3xl mx-auto pt-4 pb-10"><div class="lux-card rounded-3xl p-5"><div class="flex justify-between items-center gap-3"><div><div class="text-sm font-bold" style="color:var(--muted)">TABLE BILL</div><h1 class="text-3xl font-extrabold">حساب الطاولة</h1></div><button id="rosBillBack" class="rounded-xl border px-4 py-2 font-bold">رجوع</button></div><div id="rosBillBody" class="mt-6">جارٍ تحميل الحساب...</div></div></div></main>';
   document.getElementById('rosBillBack')?.addEventListener('click',()=>location.hash='menu');
@@ -40,7 +40,7 @@ async function showTableBill(table,trackingToken){
     document.getElementById('rosRequestBill')?.addEventListener('click',async()=>{
       const btn=document.getElementById('rosRequestBill');if(!btn||b.bill_requested_at)return;
       btn.disabled=true;btn.textContent='جارٍ إرسال الطلب...';
-      try{const q=await db.rpc('request_table_bill_by_tracking_token',{p_restaurant_id:window.store?.restaurant?.id,p_tracking_token:guestToken});if(q.error)throw q.error;btn.textContent='تم طلب الحساب — الموظف هيجيلك';}
+      try{const q=await db.rpc('request_table_bill_by_tracking_token',{p_restaurant_id:window.store?.restaurant?.id,p_tracking_token:trackingToken});if(q.error)throw q.error;btn.textContent='تم طلب الحساب — الموظف هيجيلك';}
       catch(e){btn.disabled=false;btn.textContent='اطلب الحساب من الموظف';if(window.toast)window.toast(e.message||'تعذر طلب الحساب');}
     });
   }catch(e){host.innerHTML='<div class="rounded-2xl p-5 bg-red-500/10">'+esc(e.message||'تعذر تحميل الحساب')+'</div>'}
