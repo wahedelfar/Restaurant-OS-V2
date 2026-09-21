@@ -108,10 +108,8 @@
     async function loadOrders(){
       if(!initialized)return;
       try{
-        const rpc=await supabaseClient.rpc('kds_get_grouped_orders',{p_restaurant_id:KDS_RESTAURANT_ID,p_pin:PIN});
-        if(rpc.error)throw rpc.error;
-        const data=Array.isArray(rpc.data)?rpc.data:[];
-        const orders=data.filter(o=>!isClosed(o));
+        const data=await callApi('GET');
+        const orders=(Array.isArray(data)?data:[]).filter(o=>!isClosed(o));
         orderCache=new Map(orders.map(o=>[String(o.id),o]));
         const ids=new Set(orders.map(o=>String(o.id)));
         const newOrders=orders.filter(o=>!lastOrderIds.has(String(o.id)));
