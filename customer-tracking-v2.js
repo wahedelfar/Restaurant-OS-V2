@@ -7,8 +7,8 @@ let active=null,timer=null,busy=false,last=null,failures=0;
 const esc=v=>typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
 function db(){try{if(window.__ROS_TRACK_DB__)return window.__ROS_TRACK_DB__;const c=window.APP_CONFIG||{};if(window.supabase?.createClient&&c.supabaseUrl&&c.supabaseAnonKey)return window.__ROS_TRACK_DB__=window.supabase.createClient(c.supabaseUrl,c.supabaseAnonKey);return window.db||null}catch(_){return null}}
 async function waitDb(){for(let i=0;i<80;i++){if(db())return db();await new Promise(r=>setTimeout(r,100))}return null}
-function token(){const h=String(location.hash||'');if(/^#track\//i.test(h)){const v=h.slice(h.indexOf('/')+1).split(/[?#]/)[0].trim();try{return decodeURIComponent(v)}catch(_){return v}}const q=new URLSearchParams(location.search||'');return q.get('tracking_token')||q.get('trackingToken')||q.get('track')||q.get('token')||null}
-function isTrack(){return /^#track\//i.test(location.hash||'')||!!token()}
+function token(){const h=String(location.hash||'');if(/^#track\//i.test(h)){const v=h.slice(h.indexOf('/')+1).split(/[?#]/)[0].trim();try{return decodeURIComponent(v)}catch(_){return v}}const q=new URLSearchParams(location.search||'');return q.get('tracking_token')||q.get('trackingToken')||q.get('track')||null}
+function isTrack(){return /^#track\//i.test(location.hash||'')}
 function stop(){if(timer){clearInterval(timer);timer=null}active=null;last=null;failures=0}
 const delivery=s=>['assigned','accepted','picked_up','out_for_delivery'].includes(s);
 const status=s=>({new:'تم استلام طلبك',confirmed:'تم استلام طلبك',preparing:'جاري تجهيز طلبك',ready:'تم تجهيز طلبك',assigned:'تم تعيين مندوب التوصيل',accepted:'المندوب قبل الطلب',picked_up:'المندوب استلم الطلب',out_for_delivery:'الطلب في الطريق إليك',delivered:'تم التسليم',cancelled:'تم إلغاء الطلب'})[s]||'تم استلام طلبك';
