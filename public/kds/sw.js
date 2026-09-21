@@ -1,4 +1,4 @@
-const CACHE='ros-kds-v1';
+const CACHE='ros-kds-v2';
 const SHELL=['/kds/','/kds/manifest.json?v=1','/icon-192.png?v=3','/icon-512.png?v=3','/icon-180.png?v=3'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
