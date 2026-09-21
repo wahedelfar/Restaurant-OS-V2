@@ -164,7 +164,7 @@
       if(!confirm('هل تريد مسح الأوردر من المطبخ فقط؟'))return;
       try{await applyKitchenAction(orderId,'archive');await loadOrders();}catch(e){alert(e.message);}
     }
-    function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(loadOrders,15000);}
+    function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(loadOrders,30000);}
     function startRealtime(){
       if(!supabaseClient)return;
       try{
