@@ -13,8 +13,7 @@ export default function LegacyCompat({ mode }: { mode: 'track' | 'dine-track' | 
       '/config.js?v=4',
       SUPABASE_CDN,
       '/app.js?v=13',
-      ...(mode === 'track' ? ['/customer-tracking-v2.js?v=8'] : []),
-      ...(mode === 'driver' ? ['/delivery-order-details-v1.js?v=4', '/driver-app-v1.js?v=6'] : []),
+      // public/app.js is the single feature loader; do not load route features a second time here.
     ]
 
     let cancelled = false
