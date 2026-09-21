@@ -216,8 +216,7 @@
 
   function route(){
     const h=location.hash||'#menu';
-    const mt=h.match(/^#track\/([^/]+)$/);
-    if(mt){renderTracking(decodeURIComponent(mt[1]));return true;}
+    // Customer tracking is owned exclusively by customer-tracking-v2.js.
     const md=h.match(/^#driver\/([^/]+)$/);
     if(md){renderDriver(decodeURIComponent(md[1]));return true;}
     return false;
