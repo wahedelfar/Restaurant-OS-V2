@@ -2,7 +2,7 @@
 'use strict';
 if(window.__ROS_CUSTOMER_TRACKING_V4__)return;
 window.__ROS_CUSTOMER_TRACKING_V4__=true;
-const POLL=12000;
+const POLL=30000;
 let active=null,timer=null,busy=false,last=null,failures=0;
 const esc=v=>typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
 function db(){try{if(window.__ROS_TRACK_DB__)return window.__ROS_TRACK_DB__;const c=window.APP_CONFIG||{};if(window.supabase?.createClient&&c.supabaseUrl&&c.supabaseAnonKey)return window.__ROS_TRACK_DB__=window.supabase.createClient(c.supabaseUrl,c.supabaseAnonKey);return window.db||null}catch(_){return null}}
