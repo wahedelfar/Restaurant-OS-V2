@@ -11,6 +11,14 @@
     s.onerror=()=>{console.warn('Driver inline map failed to load');window.__ROS_DRIVER_INLINE_MAP_LOADED__=false};
     document.body.appendChild(s);
   }
+  function cleanDriverHeadingText(){
+    if(!isDriver())return;
+    const root=document.querySelector('#rosDriverBox')||document.querySelector('#app');if(!root)return;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const bad=['لوحة المندوب الخاصة بك','لوحة المندوب • متابعة وتسليم الطلبات'];
+    const nodes=[];let n;while(n=walker.nextNode())nodes.push(n);
+    nodes.forEach(node=>{let v=String(node.nodeValue||'');bad.forEach(x=>{v=v.split(x).join('')});node.nodeValue=v});
+  }
   function dedupeDriverLabels(){
     if(!isDriver())return;
     const root=document.querySelector('#rosDriverBox')||document.querySelector('#app');if(!root)return;
@@ -23,8 +31,8 @@
       el.setAttribute('aria-hidden','true');
     });
   }
-  function boot(){setTimeout(loadInlineMap,100);setTimeout(dedupeDriverLabels,150);setTimeout(dedupeDriverLabels,500);setTimeout(dedupeDriverLabels,1200)}
+  function boot(){setTimeout(loadInlineMap,100);setTimeout(cleanDriverHeadingText,150);setTimeout(dedupeDriverLabels,150);setTimeout(cleanDriverHeadingText,500);setTimeout(dedupeDriverLabels,500);setTimeout(cleanDriverHeadingText,1200);setTimeout(dedupeDriverLabels,1200)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  window.addEventListener('hashchange',()=>{setTimeout(loadInlineMap,100);setTimeout(dedupeDriverLabels,150);setTimeout(dedupeDriverLabels,500);setTimeout(dedupeDriverLabels,1200)});
+  window.addEventListener('hashchange',()=>{setTimeout(loadInlineMap,100);setTimeout(cleanDriverHeadingText,150);setTimeout(dedupeDriverLabels,150);setTimeout(cleanDriverHeadingText,500);setTimeout(dedupeDriverLabels,500);setTimeout(cleanDriverHeadingText,1200);setTimeout(dedupeDriverLabels,1200)});
   new MutationObserver(()=>{if(isDriver()){dedupeDriverLabels();loadInlineMap()}}).observe(document.body,{childList:true,subtree:true});
 })();
