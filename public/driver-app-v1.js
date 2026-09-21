@@ -14,8 +14,13 @@
   function cleanDriverHeadingText(){
     if(!isDriver())return;
     const root=document.querySelector('#rosDriverBox')||document.querySelector('#app');if(!root)return;
-    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
     const bad=['لوحة المندوب الخاصة بك','لوحة المندوب • متابعة وتسليم الطلبات'];
+    [...root.querySelectorAll('*')].forEach(el=>{
+      const t=String(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(!t||!bad.includes(t))return;
+      el.remove();
+    });
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
     const nodes=[];let n;while(n=walker.nextNode())nodes.push(n);
     nodes.forEach(node=>{let v=String(node.nodeValue||'');bad.forEach(x=>{v=v.split(x).join('')});node.nodeValue=v});
   }
