@@ -6,7 +6,7 @@
     if(app) app.innerHTML='<main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f6f6f3;font-family:Cairo,Arial,sans-serif;direction:rtl"><div style="max-width:620px;background:#fff;border-radius:24px;padding:28px;text-align:center;box-shadow:0 10px 40px #0001"><h1 style="font-size:26px;font-weight:800;margin:0 0 10px">تعذر تشغيل الموقع</h1><p style="color:#666;line-height:1.8;margin:0">'+String(msg).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))+'</p><button onclick="location.reload()" style="margin-top:18px;background:#111;color:#fff;border:0;border-radius:14px;padding:12px 22px;font-weight:700">إعادة المحاولة</button></div></main>';
   };
   try{
-    const ts='87bdf44c8e9b7e9edf904193b457955192b1dcb3';
+    const ts='8fe1062cf90b4f19d8b3fd44313fd2e4ee891f7d';
     const baseRuntime='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/main/app.js';
     const r=await fetch(baseRuntime+'?v='+ts,{cache:'force-cache'});
     if(!r.ok) throw new Error('تعذر تحميل محرك الموقع الأساسي ('+r.status+')');
