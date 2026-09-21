@@ -10,14 +10,14 @@ function clear(){if(timer){clearInterval(timer);timer=null}}
 function dineToken(){const h=String(location.hash||'');if(!/^#dine-track\//i.test(h))return null;const v=h.slice(h.indexOf('/')+1).split(/[?#]/)[0].trim();return v?decodeURIComponent(v):null}
 async function waitDb(){for(let i=0;i<150;i++){if(window.db)return true;await new Promise(r=>setTimeout(r,100))}return false}
 function rpcTimeout(promise,label,ms=20000){return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' استغرق وقتًا أطول من المتوقع')),ms))])}
-async function showTableBill(table,guestToken){
+async function showTableBill(table,trackingToken){
   if(!window.db||!table||!guestToken)return;
   const app=document.querySelector('#app');if(!app)return;
   app.innerHTML='<main class="min-h-screen luxury-page p-4"><div class="max-w-3xl mx-auto pt-4 pb-10"><div class="lux-card rounded-3xl p-5"><div class="flex justify-between items-center gap-3"><div><div class="text-sm font-bold" style="color:var(--muted)">TABLE BILL</div><h1 class="text-3xl font-extrabold">حساب الطاولة</h1></div><button id="rosBillBack" class="rounded-xl border px-4 py-2 font-bold">رجوع</button></div><div id="rosBillBody" class="mt-6">جارٍ تحميل الحساب...</div></div></div></main>';
   document.getElementById('rosBillBack')?.addEventListener('click',()=>location.hash='menu');
   const host=document.getElementById('rosBillBody');
   try{
-    const r=await db.rpc('get_table_bill',{p_restaurant_id:window.store?.restaurant?.id,p_table_number:Number(table),p_guest_token:guestToken});
+    const r=await db.rpc('get_table_bill_by_tracking_token',{p_restaurant_id:window.store?.restaurant?.id,p_tracking_token:trackingToken});
     if(r.error)throw r.error;
     const b=Array.isArray(r.data)?r.data[0]:r.data;
     if(!b)throw new Error('لا توجد فاتورة مفتوحة للطاولة');
@@ -40,14 +40,15 @@ async function showTableBill(table,guestToken){
     document.getElementById('rosRequestBill')?.addEventListener('click',async()=>{
       const btn=document.getElementById('rosRequestBill');if(!btn||b.bill_requested_at)return;
       btn.disabled=true;btn.textContent='جارٍ إرسال الطلب...';
-      try{const q=await db.rpc('request_table_bill',{p_restaurant_id:window.store?.restaurant?.id,p_table_number:Number(table),p_guest_token:guestToken});if(q.error)throw q.error;btn.textContent='تم طلب الحساب — الموظف هيجيلك';}
+      try{const q=await db.rpc('request_table_bill_by_tracking_token',{p_restaurant_id:window.store?.restaurant?.id,p_tracking_token:guestToken});if(q.error)throw q.error;btn.textContent='تم طلب الحساب — الموظف هيجيلك';}
       catch(e){btn.disabled=false;btn.textContent='اطلب الحساب من الموظف';if(window.toast)window.toast(e.message||'تعذر طلب الحساب');}
     });
   }catch(e){host.innerHTML='<div class="rounded-2xl p-5 bg-red-500/10">'+esc(e.message||'تعذر تحميل الحساب')+'</div>'}
 }
 
 async function render(token){clear();if(!(await waitDb()))return;const app=document.querySelector('#app');if(!app)return;app.innerHTML='<main class="min-h-screen luxury-page p-4"><div class="max-w-3xl mx-auto pt-4 pb-10"><div class="lux-card rounded-3xl p-5"><div class="flex justify-between items-center gap-3"><div><div class="text-sm font-bold" style="color:var(--muted)">DINE-IN ORDER</div><h1 class="text-3xl font-extrabold">تتبع طلبك</h1></div><button id="rosDineTrackBack" class="rounded-xl border px-4 py-2 font-bold">القائمة</button></div><div id="rosDineTrackBody" class="mt-6">جارٍ تحميل حالة الطلب...</div></div></div></main>';document.getElementById('rosDineTrackBack')?.addEventListener('click',()=>location.hash='menu');const host=document.getElementById('rosDineTrackBody');let currentTableNumber=null;const load=async()=>{const r=await db.rpc('public_track_order_v2',{p_token:token});if(r.error){host.innerHTML='<div class="rounded-2xl p-5 bg-red-500/10">تعذر تحميل حالة الطلب.</div>';return}const x=r.data?.[0];if(!x){host.innerHTML='<div class="rounded-2xl p-5 bg-red-500/10">رابط متابعة الطلب غير صالح.</div>';return}currentTableNumber=x.table_number;if(x.order_type&&x.order_type!=='dine_in'){location.hash='track/'+encodeURIComponent(token);return}const rank={new:0,preparing:1,ready:2,delivered:3}[x.status]??0;const steps=['تم استلام الطلب','جاري التجهيز','طلبك جاهز','شكرًا لاختيارنا'];host.innerHTML=`<div class="rounded-3xl p-5" style="background:var(--surface2)"><div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${steps.map((s,i)=>`<div class="rounded-2xl p-4 border ${i===rank?'ring-2':''}" style="background:${i<=rank?'color-mix(in srgb,var(--brand) 14%,var(--surface2))':'var(--surface2)'};border-color:${i===rank?'var(--brand)':'color-mix(in srgb,var(--text) 9%,transparent)'}"><div class="w-9 h-9 rounded-full grid place-items-center font-extrabold mb-2" style="background:${i<=rank?'var(--brand)':'var(--surface)'};color:${i<=rank?'#111':'var(--muted)'}">${i<rank?'✓':i===rank?'●':'○'}</div><div class="font-extrabold text-sm">${s}</div></div>`).join('')}</div><div class="mt-5 rounded-3xl p-5 border" style="background:var(--surface);border-color:color-mix(in srgb,var(--brand) 24%,transparent)"><div class="text-sm font-bold" style="color:var(--muted)">حالة طلبك الآن</div><div class="text-2xl sm:text-3xl font-extrabold mt-2">${esc(x.admin_message||statusText[x.status]||'تم استلام الطلب')}</div>${x.status==='preparing'&&x.prep_minutes?`<div class="mt-4 rounded-2xl p-4" style="background:color-mix(in srgb,var(--brand) 10%,var(--surface2))"><div class="font-bold">وقت التجهيز</div><div class="text-3xl font-extrabold mt-1">أمامك ${Number(x.prep_minutes)} دقيقة</div></div>`:''}</div><div class="mt-5 grid grid-cols-2 gap-3"><div class="rounded-2xl p-4" style="background:var(--surface)"><div class="text-sm" style="color:var(--muted)">الطاولة</div><div class="text-2xl font-extrabold mt-1">${esc(x.table_number||'—')}</div></div><div class="rounded-2xl p-4" style="background:var(--surface)"><div class="text-sm" style="color:var(--muted)">الإجمالي</div><div class="text-2xl font-extrabold mt-1">${money(x.total)}</div></div></div><div class="mt-5 rounded-2xl p-4 text-center text-sm" style="background:var(--surface2);color:var(--muted)">سيتم تحديث حالة طلب الصالة تلقائيًا.</div><button id="rosShowTableBill" class="w-full mt-4 py-4 rounded-2xl font-extrabold" style="background:var(--brand);color:#111">عرض حساب الطاولة</button></div>`};await load();document.getElementById('rosShowTableBill')?.addEventListener('click',()=>showTableBill(currentTableNumber,token));timer=setInterval(load,3000)}
-function boot(){const t=dineToken();if(t)render(t);else clear()}
+window.__ROS_DINE_TRACK_RENDER__=function(){const t=dineToken();if(t)return render(t);clear()};
+function boot(){window.__ROS_DINE_TRACK_RENDER__()}
 async function ensureTableSession(table){
   const rid=window.store?.restaurant?.id;
   if(!rid||!window.db)throw new Error('بيانات الطاولة غير متاحة');
