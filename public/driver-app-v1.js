@@ -14,7 +14,7 @@
   function cleanDriverHeadingText(){
     if(!isDriver())return;
     const root=document.querySelector('#rosDriverBox')||document.querySelector('#app');if(!root)return;
-    const bad=['لوحة المندوب الخاصة بك','لوحة المندوب • متابعة وتسليم الطلبات'];
+    const bad=['لوحة المندوب الخاصة بك','لوحة المندوب • متابعة وتسليم الطلبات','لوحة المندوب'];
     [...root.querySelectorAll('*')].forEach(el=>{
       const t=String(el.textContent||'').replace(/\s+/g,' ').trim();
       if(!t||!bad.includes(t))return;
