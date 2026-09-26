@@ -26,7 +26,7 @@
     let kept=false;
     [...root.querySelectorAll('*')].forEach(el=>{
       const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
-      if(text!=='مندوب التوصيل')return;
+      if(!['مندوب التوصيل','لوحة المندوب','لوحة المندوب الخاصة بك','لوحة المندوب • متابعة وتسليم الطلبات'].includes(text))return;
       if(!kept){kept=true;return;}
       el.style.setProperty('display','none','important');
       el.setAttribute('aria-hidden','true');
