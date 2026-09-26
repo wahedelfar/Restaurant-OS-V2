@@ -50,6 +50,7 @@ async function render(token){clear();if(!(await waitDb()))return;const app=docum
 window.__ROS_DINE_TRACK_RENDER__=function(){const t=dineToken();if(t)return render(t);clear()};
 function boot(){window.__ROS_DINE_TRACK_RENDER__()}
 async function ensureTableSession(table){
+  for(let i=0;(!window.db||!window.store?.restaurant?.id)&&i<80;i++)await new Promise(r=>setTimeout(r,100));
   const rid=window.store?.restaurant?.id;
   if(!rid||!window.db)throw new Error('بيانات الطاولة غير متاحة');
   const key='ros_table_guest_'+rid+'_'+String(table);
