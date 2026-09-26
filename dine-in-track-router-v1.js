@@ -93,6 +93,7 @@ async function ensureTableSession(table){
   });
 }
 
+window.__ROS_TABLE_SESSION_TIMEOUT__=function(table){return rpcTimeout(ensureTableSession(table),'اختيار حساب الطاولة',20000)};
 window.__ROS_ENSURE_TABLE_SESSION__=ensureTableSession;
 
 
