@@ -7,7 +7,7 @@
   };
   try{
     const ts='ros-runtime-20260926-1916';
-    const baseRuntime='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/main/app.js';
+    const baseRuntime='/ros-runtime-v1.js';
     const r=await fetch(baseRuntime+'?v='+ts,{cache:'force-cache'});
     if(!r.ok) throw new Error('تعذر تحميل محرك الموقع الأساسي ('+r.status+')');
     let code=await r.text();
@@ -48,43 +48,7 @@
       document.body.appendChild(s);
       setTimeout(()=>{if(!settled){settled=true;window.removeEventListener('error',onerr);resolve();}},0);
     });
-    const base='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/main/';
-    const features=['product-modifiers-v2.js','product-image-upload-v1.js','dine-in-admin-guard-v2.js','cart-bridge.js','delivery-gps-clean-v2.js','customer-tracking-v2.js','delivery-ui-polish-v1.js','delivery-idempotency-v1.js','order-modifier-bridge-v1.js','delivery-admin-enhancements.js','driver-photo-field-v2.js','admin-payment-proof-v1.js','admin-tables-launcher-v1.js','admin-driver-launcher-v1.js','admin-driver-legacy-hide-v1.js','admin-products-launcher-v1.js','admin-drivers-management-v1.js','admin-action-dock-v1.js','admin-ux-notifications-v1.js','delivery-hardening-v4.js','driver-app-v1.js','delivery-map-persistence-v1.js','delivery-order-details-v1.js','driver-delivered-button-fix-v1.js','dine-in-v10-fix.js','dine-in-track-router-v1.js','driver-gps-lifecycle-v1.js','kitchen-admin-v1.js','daily-offer-v1.js','ui-cleanups-v1.js','ros-realtime-notifications-v1.js','delivery-customer-flow-v1.js','delivery-admin-dedupe-v1.js','table-billing-admin-v1.js'];
-    const fetched=await Promise.all(features.map(async name=>{
-      try{
-        const fr=await fetch(base+name+'?v='+ts,{cache:'force-cache'});
-        if(!fr.ok){
-          console.warn('[ROS] Skipping missing feature:',name,fr.status);
-          return {name,text:null};
-        }
-        return {name,text:await fr.text()};
-      }catch(err){
-        console.warn('[ROS] Failed to fetch feature, skipping:',name,err);
-        return {name,text:null};
-      }
-    }));
-    for(const item of fetched){
-      if(!item.text)continue;
-      try{
-        await new Promise((resolve,reject)=>{
-          const s=document.createElement('script');
-          let settled=false;
-          const onerr=(ev)=>{if(!settled){settled=true;window.removeEventListener('error',onerr);reject(new Error('خطأ في '+item.name+': '+(ev.message||'JavaScript error')))}};
-          window.addEventListener('error',onerr);
-          s.text=item.text;
-          document.body.appendChild(s);
-          setTimeout(()=>{if(!settled){settled=true;window.removeEventListener('error',onerr);resolve();}},0);
-        });
-      }catch(err){
-        console.warn('[ROS] Failed to execute feature, skipping:',item.name,err);
-      }
-    }
-    try{
-      const fix=await fetch('https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/main/delivery-submit-fix-v1.js?v='+ts,{cache:'force-cache'});
-      if(fix.ok){
-        const fixScript=document.createElement('script');fixScript.text=await fix.text();document.body.appendChild(fixScript);
-      }
-    }catch(e){ console.warn('fix file skipped', e); }
+    // All runtime and feature modules are now bundled locally in /ros-runtime-v1.js.
     if(typeof window.__rosInit!=='function') throw new Error('محرك ROS تم تحميله لكن دالة التشغيل غير متاحة');
     await window.__rosInit();
   }catch(e){fail(e)}
