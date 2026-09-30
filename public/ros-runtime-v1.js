@@ -1987,3 +1987,216 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   setTimeout(handleRoute,350);
 })();
 
+
+
+/* ===== ROS LOCAL MODULE: delivery-admin-dedupe-v1.js ===== */
+(function(){
+'use strict';
+if(window.__ROS_DINEIN_ADMIN_DEDUPE_V1__)return;
+window.__ROS_DINEIN_ADMIN_DEDUPE_V1__=true;
+let timer=0;
+function cleanup(){
+  if(!location.hash.startsWith('#admin'))return;
+  const deliveryPanel=document.querySelector('#deliveryControlPanel');
+  const panels=[...document.querySelectorAll('#rosPrepPanel')];
+  if(!deliveryPanel){panels.forEach(x=>x.remove());return}
+  panels.slice(1).forEach(x=>x.remove());
+  const panel=document.querySelector('#rosPrepPanel');
+  if(panel){
+    const seen=new Set();
+    [...panel.querySelectorAll('[data-ros-order-id]')].forEach(card=>{
+      const id=String(card.getAttribute('data-ros-order-id')||'');
+      if(id&&seen.has(id))card.remove();else if(id)seen.add(id);
+    });
+  }
+  const loginNodes=[...document.querySelectorAll('*')].filter(el=>el.children.length===0&&el.textContent.trim()==='تسجيل دخول الإدارة');
+  loginNodes.slice(1).forEach(el=>el.remove());
+}
+function boot(){clearTimeout(timer);timer=setTimeout(cleanup,150)}
+window.addEventListener('hashchange',boot);
+new MutationObserver(boot).observe(document.body,{childList:true,subtree:true});
+boot();
+})();
+
+
+/* ===== ROS LOCAL MODULE: table-billing-admin-v1.js ===== */
+(function(){
+'use strict';
+if(window.__ROS_TABLE_BILLING_ADMIN_V1__)return;
+window.__ROS_TABLE_BILLING_ADMIN_V1__=true;
+let timer=0;
+const esc=v=>typeof window.esc==='function'?window.esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]);
+const money=v=>typeof window.money==='function'?window.money(v):Number(v||0).toFixed(0)+' جنيه';
+function admin(){return location.hash.startsWith('#admin')&&window.__ROS_ADMIN_READY__===true}
+function panel(){return document.getElementById('rosTableBillingAdmin')}
+async function load(){
+  if(!admin()||!window.db||!window.store?.restaurant?.id)return;
+  const r=await window.db.rpc('admin_table_billing_sessions',{p_restaurant_id:window.store.restaurant.id});
+  if(r.error)return;
+  const rows=Array.isArray(r.data)?r.data:[];
+  let host=panel();
+  if(!host){
+    host=document.createElement('section');host.id='rosTableBillingAdmin';host.className='bg-white rounded-3xl p-5 mt-5';
+    const app=document.getElementById('app');if(!app)return;app.appendChild(host);
+  }
+  host.innerHTML=`<div class="flex flex-wrap items-center justify-between gap-3 mb-4"><div><h2 class="text-xl font-extrabold">حسابات الطاولات</h2><p class="text-sm mt-1" style="color:var(--muted)">الجلسات المفتوحة وطلبات الحساب</p></div><span class="px-3 py-2 rounded-xl text-sm font-bold" style="background:#f3f4f6">${rows.length} طاولة مفتوحة</span></div><div class="space-y-3">${rows.length?rows.map(x=>`<div class="border rounded-2xl p-4"><div class="flex flex-wrap justify-between gap-3"><div><div class="font-extrabold text-lg">طاولة ${esc(x.table_number)}</div><div class="text-sm mt-1" style="color:var(--muted)">${x.billing_mode==='single'?'الطاولة كلها فاتورة واحدة':'كل فرد لوحده'} — ${Number(x.order_count||0)} طلب</div></div><div class="text-right"><div class="text-xl font-extrabold">${money(x.total)}</div>${x.bill_requested_at?'<div class="text-sm font-bold mt-1" style="color:#b45309">طلب الحساب</div>':''}</div></div><div class="flex gap-2 mt-4"><button data-table-bill-close="${esc(x.session_id)}" class="px-4 py-2 rounded-xl font-bold" style="background:var(--brand);color:#111">إغلاق الحساب</button></div></div>`).join(''):'<div class="text-center py-8" style="color:var(--muted)">لا توجد حسابات طاولات مفتوحة حاليًا.</div>'}</div>`;
+  host.querySelectorAll('[data-table-bill-close]').forEach(btn=>btn.onclick=async()=>{
+    if(!confirm('إغلاق حساب الطاولة؟ بعد الإغلاق سيبدأ QR جلسة جديدة للطاولة.'))return;
+    btn.disabled=true;
+    const q=await window.db.rpc('admin_close_table_session',{p_restaurant_id:window.store.restaurant.id,p_session_id:btn.dataset.tableBillClose});
+    if(q.error){btn.disabled=false;if(window.toast)window.toast(q.error.message);return}
+    load();
+  });
+}
+function boot(){clearTimeout(timer);timer=setTimeout(load,300)}
+window.addEventListener('hashchange',boot);
+new MutationObserver(boot).observe(document.body,{childList:true,subtree:true});
+boot();
+})();
+
+
+/* ===== ROS LOCAL MODULE: ui-cleanups-v1.js ===== */
+(function(){
+  'use strict';
+  if(window.__ROS_UI_CLEANUPS_V1__)return;
+  window.__ROS_UI_CLEANUPS_V1__=true;
+  const normalize=s=>String(s||'').replace(/[\u064B-\u065F\u0670]/g,'').replace(/\s+/g,' ').trim().replace(/ة/g,'ه');
+  function dedupe(){
+    const seen=new Set();
+    document.querySelectorAll('button,a,.cat-pill').forEach(el=>{
+      const text=normalize(el.textContent);
+      if(text!=='مكرونه سبيشيال'&&text!=='مكرونه سبيشال')return;
+      if(seen.has(text)){el.style.display='none';el.setAttribute('aria-hidden','true');}
+      else seen.add(text);
+    });
+  }
+  dedupe();
+  new MutationObserver(dedupe).observe(document.body,{childList:true,subtree:true});
+})();
+
+
+
+/* ===== ROS LOCAL MODULE: ros-realtime-notifications-v1.js ===== */
+(function(){'use strict';if(window.__ROS_REALTIME_NOTIFICATIONS_V4__)return;window.__ROS_REALTIME_NOTIFICATIONS_V4__=true;const sleep=ms=>new Promise(r=>setTimeout(r,ms));let client=null,restaurantId=null,role='',audioCtx=null,lastEvents=new Map(),booted=false;const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));const key=e=>[e?.eventType,e?.table,e?.id,e?.status,e?.text].join(':');function routeRole(){const h=location.hash||'',p=location.pathname||'';if(h.startsWith('#driver/'))return'driver';if(h.startsWith('#admin'))return'admin';if(h.startsWith('#track/')||h.startsWith('#dine-track'))return'customer';if(h.startsWith('#kitchen')||p.startsWith('/kitchen')||p.startsWith('/kds'))return'kitchen';return'customer'}function unlockAudio(){try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();window.__ROS_AUDIO_UNLOCKED__=true;document.querySelector('#rosAudioUnlock')?.remove()}catch(e){}}function ensureAudioButton(){if(document.querySelector('#rosAudioUnlock')||window.__ROS_AUDIO_UNLOCKED__)return;const b=document.createElement('button');b.id='rosAudioUnlock';b.type='button';b.textContent='تفعيل صوت الإشعارات';b.style.cssText='position:fixed;z-index:2147483647;bottom:18px;right:18px;border:0;border-radius:999px;padding:11px 16px;background:var(--brand,#D4AF37);color:#111;font:800 13px Cairo,Arial,sans-serif;box-shadow:0 10px 30px #0008;cursor:pointer';b.onclick=unlockAudio;document.body.appendChild(b)}function beep(kind){try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const now=audioCtx.currentTime,notes=kind==='new'?[660,880,1046]:kind==='success'?[784,988,1174]:[520,660,520];notes.forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,now+i*.11);g.gain.exponentialRampToValueAtTime(.16,now+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,now+i*.11+.09);o.connect(g);g.connect(audioCtx.destination);o.start(now+i*.11);o.stop(now+i*.11+.1)})}catch(e){}}function notify(title,text,kind){beep(kind);try{if('Notification'in window&&Notification.permission==='granted')new Notification(title,{body:text,tag:'ros-'+Date.now()})}catch(_){}const old=document.querySelector('#rosRealtimeToast');old?.remove();const box=document.createElement('div');box.id='rosRealtimeToast';box.dir='rtl';box.innerHTML='<div style="font-weight:900">'+esc(title)+'</div><div style="margin-top:3px;opacity:.85">'+esc(text)+'</div>';box.style.cssText='position:fixed;z-index:2147483646;top:18px;right:18px;max-width:330px;padding:14px 16px;border-radius:18px;background:var(--surface,#17191D);color:var(--text,#fff);border:1px solid color-mix(in srgb,var(--brand,#D4AF37) 35%,transparent);box-shadow:0 18px 50px #0009;font:700 13px Cairo,Arial,sans-serif;cursor:pointer';box.onclick=()=>box.remove();document.body.appendChild(box);setTimeout(()=>box.remove(),6500)}function orderEvent(p){const n=p?.new||{},o=p?.old||{},id=n.id||o.id;if(!id)return null;const type=String(n.order_type||o.order_type||'delivery'),status=String(n.status||''),k=String(n.kitchen_status||''),oldStatus=String(o.status||''),oldK=String(o.kitchen_status||''),prep=n.prep_minutes,oldPrep=o.prep_minutes,msg=String(n.admin_message||''),oldMsg=String(o.admin_message||'');if(!o.id)return{eventType:'new-order',table:'orders',id,status:'new',title:'طلب جديد',text:type==='dine_in'?'طلب جديد من داخل المطعم':'طلب توصيل جديد',kind:'new'};if(oldPrep!==prep&&prep!=null&&type==='dine_in')return{eventType:'kitchen-prep',table:'orders',id,status:'prep-'+prep,title:'تحديث المطبخ',text:`وقت التجهيز المحدد: ${prep} دقيقة`,kind:'update'};if(oldK!==k&&k)return{eventType:'kitchen-status',table:'orders',id,status:k,title:'تحديث المطبخ',text:({received:'تم استلام الطلب',preparing:'جاري التجهيز',ready:'تم تجهيز الطلب'}[k]||k),kind:k==='ready'?'success':'update'};if(oldMsg!==msg&&msg&&type==='dine_in'&&['شرفتنا يا فندم','نتمنى أن ننال رضاكم'].includes(msg))return{eventType:'kitchen-message',table:'orders',id,status:msg,title:'رسالة من المطبخ',text:msg,kind:'success'};if(oldStatus!==status&&status&&type!=='dine_in')return{eventType:'order-status',table:'orders',id,status,title:'تحديث الطلب',text:'تم تحديث حالة طلب '+(n.customer_name||'العميل'),kind:status==='delivered'?'success':'update'};return null}function allowed(ev){if(!ev)return false;if(role==='kitchen')return ev.eventType==='new-order';if(role==='admin')return true;if(role==='driver')return ev.eventType==='assignment'||ev.eventType==='driver-status'||ev.eventType==='new-order';if(role==='customer')return ev.eventType==='kitchen-status'||ev.eventType==='kitchen-prep'||ev.eventType==='kitchen-message'||ev.eventType==='assignment'||ev.eventType==='driver-status'||ev.eventType==='order-status';return false}function handle(ev){if(!allowed(ev))return;const k=key(ev);if(lastEvents.has(k))return;lastEvents.set(k,Date.now());for(const[x,t]of lastEvents)if(Date.now()-t>60000)lastEvents.delete(x);notify(ev.title,ev.text,ev.kind)}async function subscribe(){if(!client||!restaurantId)return;const ch=client.channel('ros-notify-'+restaurantId+'-'+Math.random().toString(36).slice(2));ch.on('postgres_changes',{event:'INSERT',schema:'public',table:'orders'},p=>{if(String(p.new?.restaurant_id)===String(restaurantId))handle(orderEvent(p))});ch.on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders'},p=>{if(String(p.new?.restaurant_id||p.old?.restaurant_id)===String(restaurantId))handle(orderEvent(p))});ch.on('postgres_changes',{event:'UPDATE',schema:'public',table:'delivery_orders'},p=>{const n=p.new||{},o=p.old||{};if(n.id&&n.status!==o.status)handle({eventType:'driver-status',table:'delivery_orders',id:n.id,status:n.status,title:'تحديث التوصيل',text:({assigned:'تم تعيين المندوب',accepted:'المندوب قبل الطلب',picked_up:'المندوب استلم الطلب',out_for_delivery:'الطلب في الطريق إليك',delivered:'تم تسليم الطلب'}[n.status]||n.status),kind:n.status==='delivered'?'success':'update'});if(n.id&&n.driver_id!==o.driver_id)handle({eventType:'assignment',table:'delivery_orders',id:n.id,status:'assigned',title:'تعيين مندوب',text:'تم تعيين مندوب للطلب',kind:'success'})});const state=await ch.subscribe();if(state!=='SUBSCRIBED')console.warn('ROS realtime subscription',state)}let adminRefreshTimer=null;
+function startAdminFallbackRefresh(){
+  clearInterval(adminRefreshTimer);
+  adminRefreshTimer=setInterval(()=>{
+    if(routeRole()==='admin'&&typeof window.__ROS_REFRESH_ADMIN_ORDERS__==='function')window.__ROS_REFRESH_ADMIN_ORDERS__();
+  },30000);
+}
+async function boot(){if(booted)return;booted=true;role=routeRole();ensureAudioButton();document.addEventListener('pointerdown',unlockAudio,{once:true,capture:true});if('Notification'in window&&Notification.permission==='default'){try{Notification.requestPermission()}catch(_){} }for(let i=0;i<80;i++){try{client=typeof db!=='undefined'?db:null}catch(_){}try{restaurantId=typeof store!=='undefined'&&store.restaurant?.id?store.restaurant.id:null}catch(_){}if(client&&restaurantId)break;await sleep(250)}if(!client||!restaurantId){console.warn('ROS realtime notifications: client/restaurant unavailable');return}await subscribe();startAdminFallbackRefresh()}window.addEventListener('hashchange',()=>{role=routeRole();ensureAudioButton()});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot()})();
+
+
+/* ===== ROS LOCAL MODULE: customer-tracking-v2.js ===== */
+(function(){
+'use strict';
+if(window.__ROS_CUSTOMER_TRACKING_V4__)return;
+window.__ROS_CUSTOMER_TRACKING_V4__=true;
+const POLL=12000;
+let active=null,timer=null,busy=false,last=null,failures=0;
+const esc=v=>typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
+function db(){try{if(window.__ROS_TRACK_DB__)return window.__ROS_TRACK_DB__;const c=window.APP_CONFIG||{};if(window.supabase?.createClient&&c.supabaseUrl&&c.supabaseAnonKey)return window.__ROS_TRACK_DB__=window.supabase.createClient(c.supabaseUrl,c.supabaseAnonKey);return window.db||null}catch(_){return null}}
+async function waitDb(){for(let i=0;i<80;i++){if(db())return db();await new Promise(r=>setTimeout(r,100))}return null}
+function token(){const h=String(location.hash||'');if(/^#track\//i.test(h)){const v=h.slice(h.indexOf('/')+1).split(/[?#]/)[0].trim();try{return decodeURIComponent(v)}catch(_){return v}}const q=new URLSearchParams(location.search||'');return q.get('tracking_token')||q.get('trackingToken')||q.get('track')||q.get('token')||null}
+function isTrack(){return /^#track\//i.test(location.hash||'')||!!token()}
+function stop(){if(timer){clearInterval(timer);timer=null}active=null;last=null;failures=0}
+const delivery=s=>['assigned','accepted','picked_up','out_for_delivery'].includes(s);
+const status=s=>({new:'تم استلام طلبك',confirmed:'تم استلام طلبك',preparing:'جاري تجهيز طلبك',ready:'تم تجهيز طلبك',assigned:'تم تعيين مندوب التوصيل',accepted:'المندوب قبل الطلب',picked_up:'المندوب استلم الطلب',out_for_delivery:'الطلب في الطريق إليك',delivered:'تم التسليم',cancelled:'تم إلغاء الطلب'})[s]||'تم استلام طلبك';
+function shell(){const a=document.querySelector('#app');if(!a)return;a.innerHTML=`<main class="min-h-screen luxury-page p-4" dir="rtl"><div class="max-w-3xl mx-auto pt-6 pb-10"><div class="lux-card rounded-[30px] overflow-hidden"><header class="p-6" style="background:linear-gradient(135deg,var(--surface),var(--surface2));border-bottom:1px solid color-mix(in srgb,var(--text) 10%,transparent)"><div class="text-[10px] tracking-[.18em] font-black" style="color:var(--brand)">ORDER TRACKING</div><h1 class="text-3xl font-black mt-1">تتبع طلبك</h1><p class="text-sm mt-2" style="color:var(--muted)"></p></header><div id="rosTrackBox" class="p-5 sm:p-7"></div></div></div></main>`}
+function mapBlock(x){const lat=Number(x.latitude),lng=Number(x.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return '';const src=`https://www.google.com/maps?q=${encodeURIComponent(lat+','+lng)}&z=15&output=embed`;return `<section class="rounded-[30px] overflow-hidden" style="background:var(--surface2);border:1px solid color-mix(in srgb,var(--brand) 18%,transparent);box-shadow:0 14px 40px #0004"><div class="p-5 pb-3 flex justify-between items-center gap-3"><div><div class="font-black text-lg">موقع المندوب</div><div class="text-xs mt-1" style="color:var(--muted)">آخر موقع مسجل — يتم تحديثه تلقائيًا</div></div><span class="text-[10px] font-black rounded-full px-3 py-1" style="background:color-mix(in srgb,var(--brand) 12%,var(--surface));color:var(--brand)">LIVE</span></div><div style="height:320px;background:var(--surface);"><iframe title="خريطة موقع المندوب" src="${src}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:100%;border:0;display:block"></iframe></div></section>`}
+function render(x,p){const isDine=String(x.order_type||'')==='dine_in',a=delivery(x.status),name=(p?.driver_name||x.driver_name||'').trim(),phone=p?.driver_phone||x.driver_phone||'',photo=p?.driver_photo_url||p?.photo_url||'';const prep=Number(x.prep_minutes);const prepText=Number.isFinite(prep)&&prep>=5&&prep<=30?`وقت التجهيز المتوقع: ${prep} دقيقة`:'المطبخ سيحدد وقت التجهيز قريبًا';const kitchenMsg=(x.admin_message||'').trim();const dineClosing=['شرفتنا يا فندم','نتمنى أن ننال رضاكم'].includes(kitchenMsg)?kitchenMsg:'';let b=document.querySelector('#rosTrackBox');if(!b)return;const steps=['تم تعيين المندوب','تم قبول الطلب','تم استلام الطلب','الطلب في الطريق','تم التسليم'],rank={assigned:0,accepted:1,picked_up:2,out_for_delivery:3,delivered:4}[x.status];let body=`<div class="space-y-4"><section class="rounded-[30px] p-5 sm:p-6" style="background:linear-gradient(145deg,var(--surface2),var(--surface));border:1px solid color-mix(in srgb,var(--brand) 25%,transparent);box-shadow:0 18px 55px #0006"><div class="text-xs" style="color:var(--muted)">الحالة الحالية</div><div class="text-2xl sm:text-3xl font-black mt-1">${isDine?(dineClosing||status(x.status)):status(x.status)}</div>${isDine?`<div class="mt-5 rounded-2xl p-4" style="background:color-mix(in srgb,var(--brand) 8%,var(--surface))"><b>${esc(prepText)}</b><div class="text-sm mt-1" style="color:var(--muted)">${esc(kitchenMsg||'المطبخ يعمل على طلبك الآن.')}</div></div>`:(!a&&x.status!=='delivered'&&x.status!=='cancelled'?'<div class="mt-5 rounded-2xl p-4" style="background:color-mix(in srgb,var(--brand) 8%,var(--surface))"><b>تم استلام طلبك بنجاح</b><div class="text-sm mt-1" style="color:var(--muted)">المطعم يتابع طلبك، وستظهر بيانات المندوب فور تعيينه.</div></div>':'')}${a&&name?`<div class="mt-5 rounded-3xl p-4 flex items-center gap-4" style="background:var(--surface);border:1px solid color-mix(in srgb,var(--brand) 18%,transparent)">${photo?`<img src="${esc(photo)}" alt="صورة المندوب" class="w-16 h-16 rounded-2xl object-cover border" style="border-color:var(--brand)">`:'<div class="w-16 h-16 rounded-2xl grid place-items-center text-2xl font-black" style="background:var(--surface2)">م</div>'}<div class="min-w-0"><div class="text-xs" style="color:var(--muted)">مندوب التوصيل</div><div class="text-lg font-black truncate">${esc(name)}</div>${phone?`<a href="tel:${esc(phone)}" class="text-sm font-bold" style="color:var(--brand)">اتصال بالمندوب</a>`:''}</div></div>`:''}</section>`;if(a)body+=`<section class="rounded-[30px] p-5" style="background:var(--surface2)"><div class="font-black text-lg mb-4">رحلة التوصيل</div>${steps.map((s,i)=>`<div class="flex items-center gap-3 mb-3"><span class="w-8 h-8 rounded-full grid place-items-center text-xs font-black" style="background:${rank!=null&&i<=rank?'var(--brand)':'var(--surface)'};color:${rank!=null&&i<=rank?'#111':'var(--muted)'}">${rank!=null&&i<rank?'✓':i+1}</span><span class="font-extrabold">${s}</span></div>`).join('')}</section>`;if(a)body+=mapBlock(x);if(x.status==='delivered')body+=`<div class="rounded-3xl p-5 text-center font-black" style="background:color-mix(in srgb,#22c55e 12%,var(--surface2))">تم تسليم الطلب بنجاح</div>`;body+=`<div class="text-center text-xs" style="color:var(--muted)">${isDine?'تحديثات المطبخ تظهر تلقائيًا على هذه الصفحة.':'يتم تحديث الحالة تلقائيًا.'}</div></div>`;b.innerHTML=body}
+async function fetchData(){if(!active||busy)return;const c=await waitDb();if(!c){failures++;return}busy=true;try{let r=await c.rpc('public_track_order_v2',{p_token:active});if(r.error||!r.data?.length)r=await c.rpc('public_track_order',{p_token:active});if(r.error||!r.data?.length){failures++;if(!last&&failures>=3){const b=document.querySelector('#rosTrackBox');if(b)b.innerHTML='<div class="rounded-3xl p-6 text-center" style="background:color-mix(in srgb,#ef4444 10%,var(--surface2))"><b>تعذر تحميل حالة الطلب حاليًا.</b><div class="text-xs mt-2">سيتم إعادة المحاولة تلقائيًا.</div></div>'}return}failures=0;last=r.data[0];let p=null;if(last.driver_name&&last.status!=='cancelled'){const q=await c.rpc('public_driver_profile',{p_token:active});if(!q.error&&q.data?.length)p=q.data[0]}render(last,p);if(['delivered','cancelled'].includes(last.status)&&timer){clearInterval(timer);timer=null}}catch(e){console.error('ROS customer tracking',e);failures++}finally{busy=false}}
+async function load(){if(!isTrack())return;const t=token(),a=document.querySelector('#app');if(!t||!a)return;if(active===t&&document.querySelector('#rosTrackBox')){fetchData();return}if(timer){clearInterval(timer);timer=null}active=t;last=null;failures=0;shell();await fetchData();if(active===t&&!timer)timer=setInterval(fetchData,POLL)}
+const originalRouter=window.renderRouter;window.renderRouter=function(){if(isTrack())return load();return typeof originalRouter==='function'?originalRouter.apply(this,arguments):undefined};
+window.addEventListener('hashchange',e=>{if(/^#track\//i.test(location.hash||'')){e.stopImmediatePropagation();load()}else stop()},true);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
+setTimeout(load,1000);
+})();
+
+
+
+/* ===== ROS LOCAL MODULE: delivery-submit-fix-v1.js ===== */
+(function(){
+  'use strict';
+  if(window.__ROS_DELIVERY_SUBMIT_FIX_V1__) return;
+  window.__ROS_DELIVERY_SUBMIT_FIX_V1__=true;
+
+  const notify=(m)=>{try{if(typeof toast==='function')toast(m);else alert(m)}catch(_){alert(m)}};
+  const esc=(v)=>typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
+  const money=(v)=>typeof window.money==='function'?window.money(v):`${Number(v||0).toFixed(0)} جنيه`;
+  const base=()=>String((window.APP_CONFIG&&window.APP_CONFIG.publicAppUrl)||location.origin).replace(/\/$/,'');
+  const track=(t)=>base()+'/#track/'+encodeURIComponent(t);
+
+  window.sendDeliveryOrder=async function(){
+    if(window.__ROS_DELIVERY_SENDING__) return;
+    if(!Array.isArray(window.cart)||!cart.length) return notify('السلة فارغة');
+    const name=document.querySelector('#cust')?.value.trim()||'';
+    const phone=document.querySelector('#customerPhone')?.value.trim()||'';
+    const address=document.querySelector('#addr')?.value.trim()||'';
+    const pay=document.querySelector('#pay')?.value||'cash';
+    const transferPhone=document.querySelector('#transferPhone')?.value.trim()||null;
+    const proofFile=document.querySelector('#proof')?.files?.[0]||null;
+    if(!name||!phone||!address) return notify('اكتب الاسم ورقم الهاتف والعنوان');
+    if(pay==='vodafone'&&(!transferPhone||!proofFile)) return notify('أدخل رقم التليفون المحوّل منه وأرفق صورة التحويل');
+    if(!window.db||!window.store?.restaurant?.id) return notify('بيانات المطعم غير متاحة');
+    window.__ROS_DELIVERY_SENDING__=true;
+    try{
+      let proofUrl=null;
+      if(pay==='vodafone'&&typeof uploadPaymentProof==='function') proofUrl=await uploadPaymentProof(proofFile);
+      const items=cart.map(x=>({product_id:x.id,name:x.name,quantity:Math.max(1,Number(x.qty||x.quantity||1)),price:Number(x.price||0),modifiers:Array.isArray(x.modifiers)?x.modifiers.map(m=>({id:m.id,name:m.name,price:Number(m.price||0)})):[]}));
+      const requestId=crypto.randomUUID();
+      const r=await db.rpc('create_delivery_order_v2',{p_restaurant_id:store.restaurant.id,p_customer_name:name,p_customer_phone:phone,p_address:address,p_payment_method:pay,p_items:items,p_customer_lat:window.__customerCoords?.lat??null,p_customer_lng:window.__customerCoords?.lng??null,p_transfer_phone:transferPhone,p_payment_proof_url:proofUrl,p_client_request_id:requestId});
+      if(r.error) throw new Error(r.error.message||'تعذر إنشاء الطلب');
+      const row=Array.isArray(r.data)?r.data[0]:r.data;
+      const token=row?.tracking_token;
+      if(!token) throw new Error('تم إنشاء الطلب لكن لم يتم إنشاء رابط التتبع');
+      try{localStorage.setItem('ros_last_tracking_token',String(token));}catch(_){}
+      const total=Number(row?.total||cart.reduce((a,b)=>a+Number(b.price||0)*Number(b.qty||1),0));
+      const restaurant=store.restaurant.name||'المطعم';
+      const msg=`طلب توصيل جديد\n${restaurant}\nالعميل: ${name}\nالهاتف: ${phone}\nالعنوان: ${address}\nالإجمالي: ${money(total)}`;
+      const wa='https://wa.me/'+String(store.restaurant.whatsapp_number||'201026569682').replace(/\D/g,'')+'?text='+encodeURIComponent(msg);
+      const url=track(token);
+      cart=[];
+      if(typeof updateCart==='function') updateCart();
+      const modal=document.querySelector('#modal');
+      if(modal) modal.innerHTML=`<div class="fixed inset-0 modal z-50 p-4 grid place-items-center"><div class="checkout-modal w-full max-w-md rounded-3xl p-6 text-center"><div class="text-5xl mb-3">✓</div><h2 class="text-2xl font-extrabold">تم استلام طلبك</h2><p class="mt-2" style="color:var(--muted)">احتفظ برابط التتبع لمتابعة حالة الطلب وموقع المندوب.</p><a href="${esc(url)}" class="block mt-5 w-full py-4 rounded-2xl text-white font-extrabold text-center" style="background:var(--brand)">متابعة الطلب</a><a href="${esc(wa)}" target="_blank" rel="noopener noreferrer" class="mt-3 w-full py-3 rounded-2xl border font-extrabold flex items-center justify-center gap-2" style="color:#25D366;border-color:#25D366">WhatsApp للمطعم</a></div></div>`;
+    }catch(e){
+      console.error('ROS delivery submit failed',e);
+      notify(e?.message||'تعذر إنشاء الطلب');
+    }finally{window.__ROS_DELIVERY_SENDING__=false;}
+  };
+
+  // Tracking resilience: the order is already committed by the RPC, so the tracking
+  // page must retry instead of declaring the token invalid on its first empty read.
+  function installTrackingResilience(){
+    if(window.__ROS_TRACKING_RESILIENCE_INLINE__)return;
+    window.__ROS_TRACKING_RESILIENCE_INLINE__=true;
+    let active=null,timer=null;
+    const tokenFromHash=()=>{const h=location.hash||'';return h.startsWith('#track/')?decodeURIComponent(h.slice(7)):null;};
+    const waitDb=async()=>{for(let i=0;i<40;i++){if(window.db?.rpc)return true;await new Promise(r=>setTimeout(r,100));}return false;};
+    const load=async(token,attempt=0)=>{
+      if(token!==tokenFromHash())return;
+      const box=document.querySelector('#trackBox')||document.querySelector('#rosTrackBox');
+      if(!box)return;
+      if(!(await waitDb()))return;
+      const r=await db.rpc('public_track_order',{p_token:token});
+      if(token!==tokenFromHash())return;
+      if(r.error){if(attempt<8){timer=setTimeout(()=>load(token,attempt+1),500);return;}box.innerHTML='<div class="p-5 rounded-2xl bg-red-500/10">تعذر تحميل حالة الطلب.</div>';return;}
+      const x=Array.isArray(r.data)?r.data[0]:r.data;
+      if(!x){
+        if(attempt<12){box.innerHTML='<div class="p-5 rounded-2xl" style="background:var(--surface2)"><div class="text-4xl mb-2">✓</div><div class="font-extrabold text-xl">جارٍ تأكيد استلام الطلب...</div><div class="mt-2 text-sm" style="color:var(--muted)">لا تحتاج إلى تحديث الصفحة.</div></div>';timer=setTimeout(()=>load(token,attempt+1),500);return;}
+      const status=String(x.status||'new');
+      const labels={new:'تم استلام طلبك',confirmed:'تم تأكيد الطلب',preparing:'جاري تجهيز الطلب',ready:'الطلب جاهز',assigned:'تم تعيين المندوب',accepted:'المندوب قبل الطلب',picked_up:'المندوب استلم الطلب',out_for_delivery:'الطلب في الطريق إليك',delivered:'تم تسليم الطلب'};
+      const state=labels[status]||'تم استلام طلبك';
+      const gps=x.latitude!=null&&x.longitude!=null;
+      box.innerHTML=`<div class="space-y-4"><div class="rounded-3xl p-6 text-center" style="background:var(--surface2);border:1px solid color-mix(in srgb,var(--brand) 24%,transparent)"><div class="text-5xl mb-3">✓</div><div class="text-2xl font-extrabold">${esc(state)}</div><div class="mt-2 text-sm" style="color:var(--muted)">${status==='new'?'جاري تجهيز طلبك وسيتم تحديث الحالة تلقائيًا.':'سيتم تحديث حالة الطلب والتوصيل تلقائيًا.'}</div></div><div class="rounded-2xl p-4" style="background:var(--surface2)"><div class="text-sm" style="color:var(--muted)">العميل</div><div class="font-bold">${esc(x.customer_name||'عميل')}</div><div class="mt-3 text-sm" style="color:var(--muted)">الإجمالي</div><div class="font-extrabold text-xl">${money(x.total)}</div>${x.driver_name?`<div class="mt-3 text-sm" style="color:var(--muted)">المندوب</div><div class="font-bold">${esc(x.driver_name)}</div>`:''}${x.driver_phone?`<a href="tel:${esc(x.driver_phone)}" class="inline-block mt-2 font-bold" style="color:var(--brand)">${esc(x.driver_phone)}</a>`:''}${gps?`<a target="_blank" rel="noopener" href="https://www.google.com/maps?q=${encodeURIComponent(x.latitude+','+x.longitude)}" class="inline-block mt-3 px-4 py-2 rounded-xl border font-bold">فتح موقع المندوب</a>`:''}</div></div>`;
+      if(timer)clearTimeout(timer);
+      if(!['delivered','cancelled'].includes(status))timer=setTimeout(()=>load(token,0),5000);
+    };
+    const run=()=>{const token=tokenFromHash();if(!token||token===active)return;active=token;if(timer)clearTimeout(timer);setTimeout(()=>load(token,0),100);};
+    window.addEventListener('hashchange',()=>{active=null;run();});
+    setTimeout(run,800);
+  }
+  installTrackingResilience();
+})();
+
