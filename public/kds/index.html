@@ -126,7 +126,7 @@
     async function archiveOrder(orderId){
       if(!confirm('هل تريد مسح الأوردر من المطبخ فقط؟'))return;
       try{
-        const res=await fetch(`${SUPABASE_URL}/functions/v1/kitchen-api,{method:'POST',headers:{'Content-Type':'application/json','apikey':key,'Authorization':`Bearer ${key}`,'x-kitchen-pin':PIN},body:JSON.stringify({action:'archive',id:orderId})});
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/kitchen-api`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'x-kitchen-pin':PIN},body:JSON.stringify({action:'archive',id:orderId})});
         const data=await res.json().catch(()=>({}));
         if(!res.ok)throw new Error(data.error||'فشل مسح الأوردر من المطبخ');
         await loadOrders();
