@@ -67,6 +67,7 @@
       const x=Array.isArray(r.data)?r.data[0]:r.data;
       if(!x){
         if(attempt<12){box.innerHTML='<div class="p-5 rounded-2xl" style="background:var(--surface2)"><div class="text-4xl mb-2">✓</div><div class="font-extrabold text-xl">جارٍ تأكيد استلام الطلب...</div><div class="mt-2 text-sm" style="color:var(--muted)">لا تحتاج إلى تحديث الصفحة.</div></div>';timer=setTimeout(()=>load(token,attempt+1),500);return;}
+      }
       const status=String(x.status||'new');
       const labels={new:'تم استلام طلبك',confirmed:'تم تأكيد الطلب',preparing:'جاري تجهيز الطلب',ready:'الطلب جاهز',assigned:'تم تعيين المندوب',accepted:'المندوب قبل الطلب',picked_up:'المندوب استلم الطلب',out_for_delivery:'الطلب في الطريق إليك',delivered:'تم تسليم الطلب'};
       const state=labels[status]||'تم استلام طلبك';

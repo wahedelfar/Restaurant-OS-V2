@@ -2025,7 +2025,7 @@ boot();
 if(window.__ROS_TABLE_BILLING_ADMIN_V1__)return;
 window.__ROS_TABLE_BILLING_ADMIN_V1__=true;
 let timer=0;
-const esc=v=>typeof window.esc==='function'?window.esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]);
+const esc=v=>typeof window.esc==='function'?window.esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const money=v=>typeof window.money==='function'?window.money(v):Number(v||0).toFixed(0)+' جنيه';
 function admin(){return location.hash.startsWith('#admin')&&window.__ROS_ADMIN_READY__===true}
 function panel(){return document.getElementById('rosTableBillingAdmin')}
@@ -2185,6 +2185,7 @@ setTimeout(load,1000);
       const x=Array.isArray(r.data)?r.data[0]:r.data;
       if(!x){
         if(attempt<12){box.innerHTML='<div class="p-5 rounded-2xl" style="background:var(--surface2)"><div class="text-4xl mb-2">✓</div><div class="font-extrabold text-xl">جارٍ تأكيد استلام الطلب...</div><div class="mt-2 text-sm" style="color:var(--muted)">لا تحتاج إلى تحديث الصفحة.</div></div>';timer=setTimeout(()=>load(token,attempt+1),500);return;}
+      }
       const status=String(x.status||'new');
       const labels={new:'تم استلام طلبك',confirmed:'تم تأكيد الطلب',preparing:'جاري تجهيز الطلب',ready:'الطلب جاهز',assigned:'تم تعيين المندوب',accepted:'المندوب قبل الطلب',picked_up:'المندوب استلم الطلب',out_for_delivery:'الطلب في الطريق إليك',delivered:'تم تسليم الطلب'};
       const state=labels[status]||'تم استلام طلبك';
