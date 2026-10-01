@@ -37,7 +37,7 @@
 }`;
     code=code.slice(0,start)+patchedLoad+code.slice(end);
     code=code.replace(/async function init\(\)\{/,'async function __rosInit(){');
-    code=code.replace(/\ninit\(\);\s*$/,'\n');
+    code=code.replace(/\ninit\(\);/,'\n');
     if(!/async function __rosInit\(\)/.test(code)) throw new Error('تعذر تجهيز دالة تشغيل ROS');
     await new Promise((resolve,reject)=>{
       const s=document.createElement('script');
