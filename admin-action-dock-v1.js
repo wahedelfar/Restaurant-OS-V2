@@ -32,7 +32,13 @@ function openDrivers(){
    list.innerHTML=data.map(d=>`<div class="ros-driver-card"><div class="ros-driver-photo">${d.photo_url?`<img src="${String(d.photo_url).replace(/"/g,'&quot;')}" alt="" class="ros-driver-photo">`:'🏍️'}</div><div class="ros-driver-info"><div class="ros-driver-name">${String(d.name||'مندوب').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div><div class="ros-driver-meta">${String(d.phone||'بدون رقم').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div></div><span class="ros-driver-state" style="background:${d.active?'#16a34a22':'#ffffff0d'};color:${d.active?'#6ee7a0':'#aaa'}">${d.active?'نشط':'غير نشط'}</span></div>`).join('');
  });
 }
-function sync(){if(!admin()){document.getElementById('ros-admin-action-dock')?.remove();closeDrivers();return}style();let d=document.getElementById('ros-admin-action-dock');if(!d){d=document.createElement('div');d.id='ros-admin-action-dock';d.innerHTML='<button id="ros-admin-dock-toggle" type="button" aria-label="أدوات الإدارة" aria-expanded="false">☰</button>'+items.map(x=>`<button type="button" class="ros-admin-dock-item" data-target="${x.id}" title="${x.label}" aria-label="${x.label}">${x.icon}<span>${x.label}</span></button>`).join('');document.body.appendChild(d);d.classList.add('open');d.querySelector('#ros-admin-dock-toggle').setAttribute('aria-expanded','true');d.querySelector('#ros-admin-dock-toggle').onclick=()=>{const open=d.classList.toggle('open');d.querySelector('#ros-admin-dock-toggle').setAttribute('aria-expanded',String(open))};d.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{
+function sync(){
+ if(!admin()){document.getElementById('ros-admin-action-dock')?.remove();closeDrivers();return}
+ const db=client();
+ if(!db){document.getElementById('ros-admin-action-dock')?.remove();closeDrivers();return}
+ db.auth.getSession().then(({data})=>{
+   if(!admin()||!data?.session){document.getElementById('ros-admin-action-dock')?.remove();closeDrivers();return}
+   style();let d=document.getElementById('ros-admin-action-dock');if(!d){d=document.createElement('div');d.id='ros-admin-action-dock';d.innerHTML='<button id="ros-admin-dock-toggle" type="button" aria-label="أدوات الإدارة" aria-expanded="false">☰</button>'+items.map(x=>`<button type="button" class="ros-admin-dock-item" data-target="${x.id}" title="${x.label}" aria-label="${x.label}">${x.icon}<span>${x.label}</span></button>`).join('');document.body.appendChild(d);d.classList.add('open');d.querySelector('#ros-admin-dock-toggle').setAttribute('aria-expanded','true');d.querySelector('#ros-admin-dock-toggle').onclick=()=>{const open=d.classList.toggle('open');d.querySelector('#ros-admin-dock-toggle').setAttribute('aria-expanded',String(open))};d.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{
 const id=b.dataset.target;
 if(id==='ros-drivers-management'){openDrivers();return}
 if(id==='ros-admin-menu-nav'){location.hash='#menu';return}
@@ -45,5 +51,7 @@ if(target){target.scrollIntoView({behavior:'smooth',block:'start'});target.style
 }
 document.getElementById(id)?.click()
 })}items.forEach(x=>{if(!['ros-drivers-management','ros-admin-orders-nav','ros-admin-delivery-nav','ros-admin-dine-nav','ros-admin-offer-nav','ros-admin-menu-nav','ros-admin-logout-nav'].includes(x.id))hideOriginal(x.id)})}
+ }).catch(()=>{document.getElementById('ros-admin-action-dock')?.remove();closeDrivers()});
+}
 new MutationObserver(()=>{if(admin())sync()}).observe(document.body,{childList:true,subtree:true});window.addEventListener('hashchange',sync);sync();
 })();
