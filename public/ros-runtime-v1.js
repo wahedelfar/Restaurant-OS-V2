@@ -255,7 +255,7 @@ async function deleteAllOrders(){
   finally{if(btn){btn.disabled=false;btn.textContent='حذف الطلبات السابقة'}}
 }
 function showQR(n){const url=new URL(location.href);url.hash='';url.search='';url.searchParams.set('table',n);const qrUrl=url.toString();$('#modal').innerHTML=`<div class="fixed inset-0 modal z-50 p-4 grid place-items-center" onclick="if(event.target===this)closeModal()"><div class="relative bg-white rounded-3xl p-6 text-center w-full max-w-md"><button onclick="closeModal()" class="absolute top-3 left-3 w-11 h-11 rounded-full bg-gray-100 text-3xl leading-none" aria-label="إغلاق">×</button><h2 class="text-2xl font-extrabold">QR — طاولة ${n}</h2><div id="qr" class="my-5 flex justify-center"></div><input readonly value="${esc(qrUrl)}" class="w-full border rounded-xl p-3 text-xs text-left" dir="ltr"><button onclick="window.print()" class="mt-4 px-5 py-3 rounded-xl bg-black text-white">طباعة</button></div></div>`;const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';s.onload=()=>new QRCode(document.getElementById('qr'),{text:qrUrl,width:220,height:220});document.head.appendChild(s)}
-init();
+
 
 
 
