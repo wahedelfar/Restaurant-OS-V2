@@ -53,7 +53,7 @@ function showFatal(message){
   const appEl=$('#app');
   if(appEl) appEl.innerHTML=`<main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f6f6f3;font-family:Cairo,Arial,sans-serif"><div style="max-width:520px;background:#fff;border-radius:24px;padding:28px;text-align:center;box-shadow:0 10px 40px #0001"><h1 style="font-size:26px;font-weight:800;margin:0 0 10px">تعذر تشغيل الموقع</h1><p style="color:#666;line-height:1.8;margin:0">${esc(message)}</p><button onclick="location.reload()" style="margin-top:18px;background:#111;color:#fff;border:0;border-radius:14px;padding:12px 22px;font-weight:700">إعادة المحاولة</button></div></main>`;
 }
-async function init(){
+async function __rosInit(){
   try{
     if(C.mode==='supabase'&&C.supabaseUrl&&C.supabaseAnonKey){
       if(!window.supabase||typeof window.supabase.createClient!=='function'){
