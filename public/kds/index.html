@@ -12,19 +12,6 @@
   <style>body{font-family:'Cairo',sans-serif}.hidden{display:none!important}</style>
 </head>
 <body class="bg-slate-950 text-white min-h-screen">
-  <div id="configScreen" class="min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-      <h1 class="text-2xl font-extrabold mb-2">إدارة المطبخ</h1>
-      <p class="text-slate-400 mb-6">أدخل بيانات Supabase مرة واحدة. سيتم حفظها محليًا على هذا الجهاز.</p>
-      <label class="block text-sm font-bold mb-2">Supabase URL</label>
-      <input id="supabaseUrl" type="url" autocomplete="off" placeholder="https://xxxx.supabase.co" class="w-full mb-4 rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 outline-none focus:border-amber-500" />
-      <label class="block text-sm font-bold mb-2">Supabase Publishable/Anon Key</label>
-      <input id="supabaseKey" type="password" autocomplete="off" placeholder="ضع المفتاح هنا" class="w-full mb-4 rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 outline-none focus:border-amber-500" />
-      <button id="saveConfig" class="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3">حفظ وتشغيل</button>
-      <p id="configError" class="text-red-400 text-sm mt-3 hidden"></p>
-    </div>
-  </div>
-
   <div id="pinScreen" class="hidden min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl text-center">
       <div class="text-4xl mb-3">🔒</div>
@@ -46,13 +33,13 @@
 
   <script>
     const PIN='1234';
+    const SUPABASE_URL='https://znnnkoujfuweydvbkejh.supabase.co';
+    const SUPABASE_KEY='sb_publishable_gjYA4-E-BL0X1hc3YugqyQ_1VaOo_se';
     let supabaseClient=null,initialized=false,lastOrderIds=new Set(),oldCount=0,pollTimer=null,realtimeChannel=null;
     let audioCtx = null;
     const $=id=>document.getElementById(id);
     const esc=v=>String(v??'').replace(/[&<>\'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    const getConfig=()=>({url:localStorage.getItem('supabase_url')||'',key:localStorage.getItem('supabase_key')||''});
-    const apiBase=()=>getConfig().url.replace(/\/$/,'')+'/functions/v1/kitchen-api';
-
+    const apiBase=()=>SUPABASE_URL+'/functions/v1/kitchen-api';
     function initAudio(){
       if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
       if(audioCtx.state==='suspended') audioCtx.resume();
@@ -76,15 +63,12 @@
     function notifyNewOrder(){
       if('Notification' in window && Notification.permission==='granted'){try{new Notification('طلب جديد');}catch(e){}}
     }
-    function showConfig(){$('configScreen').classList.remove('hidden');$('pinScreen').classList.add('hidden');$('app').classList.add('hidden');}
-    function showPin(){$('configScreen').classList.add('hidden');$('pinScreen').classList.remove('hidden');$('app').classList.add('hidden');setTimeout(()=>$('pin').focus(),50);}
-    function showApp(){$('configScreen').classList.add('hidden');$('pinScreen').classList.add('hidden');$('app').classList.remove('hidden');}
+    function showPin(){$('pinScreen').classList.remove('hidden');$('app').classList.add('hidden');setTimeout(()=>$('pin').focus(),50);}
+    function showApp(){$('pinScreen').classList.add('hidden');$('app').classList.remove('hidden');}
 
-    async function initSupabase(){
-      const {url,key}=getConfig();
-      if(!url||!key){showConfig();return false;}
-      try{supabaseClient=window.supabase.createClient(url.trim(),key.trim());initialized=true;return true;}
-      catch(e){$('configError').textContent='بيانات Supabase غير صحيحة.';$('configError').classList.remove('hidden');showConfig();return false;}
+    function initSupabase(){
+      try{supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);initialized=true;return true;}
+      catch(e){console.error('Supabase init failed',e);return false;}
     }
     async function callApi(method='GET',body=null){
       const options={method,headers:{'Content-Type':'application/json','x-kitchen-pin':PIN}};
@@ -142,8 +126,7 @@
     async function archiveOrder(orderId){
       if(!confirm('هل تريد مسح الأوردر من المطبخ فقط؟'))return;
       try{
-        const {url,key}=getConfig();
-        const res=await fetch(`${url.replace(/\/$/,'')}/functions/v1/kitchen-api`,{method:'POST',headers:{'Content-Type':'application/json','apikey':key,'Authorization':`Bearer ${key}`,'x-kitchen-pin':PIN},body:JSON.stringify({action:'archive',id:orderId})});
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/kitchen-api,{method:'POST',headers:{'Content-Type':'application/json','apikey':key,'Authorization':`Bearer ${key}`,'x-kitchen-pin':PIN},body:JSON.stringify({action:'archive',id:orderId})});
         const data=await res.json().catch(()=>({}));
         if(!res.ok)throw new Error(data.error||'فشل مسح الأوردر من المطبخ');
         await loadOrders();
@@ -158,23 +141,26 @@
       }catch(e){console.warn('Realtime unavailable',e);}
     }
 
-    $('saveConfig').onclick=async()=>{
-      const url=$('supabaseUrl').value.trim(),key=$('supabaseKey').value.trim();
-      if(!url||!key){$('configError').textContent='أدخل Supabase URL والمفتاح.';$('configError').classList.remove('hidden');return;}
-      localStorage.setItem('supabase_url',url);localStorage.setItem('supabase_key',key);$('configError').classList.add('hidden');
-      initAudio();
-      if(await initSupabase())showPin();
-    };
     async function verifyPin(){
       initAudio();
-      if($('pin').value.trim()===PIN){localStorage.setItem('kds_auth','1');await requestNotificationPermission();showApp();await loadOrders();startPolling();startRealtime();}
-      else{$('pinError').classList.remove('hidden');$('pin').value='';$('pin').focus();}
+      if($('pin').value.trim()===PIN){
+        if(!initSupabase()){$('pinError').textContent='تعذر تشغيل خدمة المطبخ.';$('pinError').classList.remove('hidden');return;}
+        localStorage.setItem('kds_auth','1');
+        await requestNotificationPermission();
+        showApp();await loadOrders();startPolling();startRealtime();
+      }else{$('pinError').textContent='كلمة المرور غير صحيحة';$('pinError').classList.remove('hidden');$('pin').value='';$('pin').focus();}
     }
     $('login').onclick=verifyPin;
     $('pin').onkeydown=e=>{if(e.key==='Enter')verifyPin();};
     $('logout').onclick=()=>{localStorage.removeItem('kds_auth');clearInterval(pollTimer);if(realtimeChannel&&supabaseClient){supabaseClient.removeChannel(realtimeChannel);realtimeChannel=null;}showPin();};
     $('orders').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='archive')archiveOrder(id);else if(b.dataset.action==='ready')readyOrder(id);else if(b.dataset.action==='status')updateStatus(id,b.dataset.status);});
-    (async()=>{const ok=await initSupabase();if(!ok)return;$('supabaseUrl').value=getConfig().url;$('supabaseKey').value=getConfig().key;if(localStorage.getItem('kds_auth')==='1'){initAudio();requestNotificationPermission();showApp();await loadOrders();startPolling();startRealtime();}else showPin();})();
+    (async()=>{
+      if(localStorage.getItem('kds_auth')==='1'){
+        initAudio();
+        if(initSupabase()){requestNotificationPermission();showApp();await loadOrders();startPolling();startRealtime();}
+        else showPin();
+      }else showPin();
+    })();
   </script>
 </body>
 </html>
