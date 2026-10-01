@@ -886,7 +886,7 @@ patch();
       if(a.parentElement?.querySelector('[data-driver-toggle]'))return;
       const b=document.createElement('button');b.type='button';b.dataset.driverToggle=d.id;b.dataset.driverId=d.id;b.dataset.driverActive=String(d.active);b.textContent=d.active?'إيقاف المندوب':'تفعيل المندوب';b.className='rounded-xl border px-4 py-2 font-bold';b.setAttribute('data-driver-toggle','1');
       b.onclick=async function(){const active=this.dataset.driverActive!=='true';this.disabled=true;const rr=await db.rpc('admin_update_driver',{p_restaurant_id:store.restaurant.id,p_driver_id:this.dataset.driverId,p_active:active});if(rr.error){this.disabled=false;return typeof toast==='function'&&toast(rr.error.message||'تعذر تعديل حالة المندوب')}if(typeof toast==='function')toast(active?'تم تفعيل المندوب':'تم إيقاف المندوب');panel.querySelector('#rosRefresh')?.click()};a.parentElement.appendChild(b);
-      if(a.parentElement?.querySelector('[data-driver-delete]'))continue;
+      if(a.parentElement?.querySelector('[data-driver-delete]'))return;
       const del=document.createElement('button');del.type='button';del.dataset.driverDelete=d.id;del.textContent='حذف';del.className='rounded-xl border border-red-500/40 px-4 py-2 font-bold text-red-400';del.onclick=async function(){const driverName=d.name||'هذا المندوب';if(!confirm(`هل أنت متأكد من حذف ${driverName}؟\n\nلن يمكن التراجع عن هذا الإجراء.`))return;this.disabled=true;const rr=await db.rpc('admin_delete_driver',{p_driver_id:d.id});if(rr.error){this.disabled=false;const msg=rr.error.message||'تعذر حذف المندوب';return typeof toast==='function'&&toast(msg==='driver_has_active_delivery'?'لا يمكن حذف المندوب لأنه مرتبط بطلب دليفري نشط. أوقف الطلب أو أكمله أولاً.':msg)}if(typeof toast==='function')toast('تم حذف المندوب');panel.querySelector('#rosRefresh')?.click()};a.parentElement.appendChild(del);
     });
   }
@@ -2025,7 +2025,7 @@ boot();
 if(window.__ROS_TABLE_BILLING_ADMIN_V1__)return;
 window.__ROS_TABLE_BILLING_ADMIN_V1__=true;
 let timer=0;
-const esc=v=>typeof window.esc==='function'?window.esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]);
+const esc=v=>typeof window.esc==='function'?window.esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const money=v=>typeof window.money==='function'?window.money(v):Number(v||0).toFixed(0)+' جنيه';
 function admin(){return location.hash.startsWith('#admin')&&window.__ROS_ADMIN_READY__===true}
 function panel(){return document.getElementById('rosTableBillingAdmin')}
@@ -2185,6 +2185,7 @@ setTimeout(load,1000);
       const x=Array.isArray(r.data)?r.data[0]:r.data;
       if(!x){
         if(attempt<12){box.innerHTML='<div class="p-5 rounded-2xl" style="background:var(--surface2)"><div class="text-4xl mb-2">✓</div><div class="font-extrabold text-xl">جارٍ تأكيد استلام الطلب...</div><div class="mt-2 text-sm" style="color:var(--muted)">لا تحتاج إلى تحديث الصفحة.</div></div>';timer=setTimeout(()=>load(token,attempt+1),500);return;}
+      }
       const status=String(x.status||'new');
       const labels={new:'تم استلام طلبك',confirmed:'تم تأكيد الطلب',preparing:'جاري تجهيز الطلب',ready:'الطلب جاهز',assigned:'تم تعيين المندوب',accepted:'المندوب قبل الطلب',picked_up:'المندوب استلم الطلب',out_for_delivery:'الطلب في الطريق إليك',delivered:'تم تسليم الطلب'};
       const state=labels[status]||'تم استلام طلبك';
