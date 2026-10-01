@@ -114,6 +114,9 @@
     if(pay==='vodafone'&&(!transferPhone||!proofFile))return notify('أدخل رقم التليفون المحوّل منه وأرفق صورة التحويل');
     if(!window.db||!window.store?.restaurant?.id)return notify('بيانات المطعم غير متاحة');
 
+    const customerCoords=window.__customerCoords?{lat:Number(window.__customerCoords.lat),lng:Number(window.__customerCoords.lng),accuracy:Number(window.__customerCoords.accuracy||0)}:null;
+    const hasCustomerCoords=customerCoords&&Number.isFinite(customerCoords.lat)&&Number.isFinite(customerCoords.lng);
+    if(pay==='vodafone'&&!hasCustomerCoords)return notify('حدد موقعك الحالي أولًا قبل الدفع عبر Vodafone Cash');
     const btn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('إرسال طلب التوصيل'));
     const originalText=btn?.textContent||'إرسال طلب التوصيل';
     if(btn){btn.disabled=true;btn.textContent='جارٍ رفع البيانات وإنشاء الطلب...';btn.style.opacity='.65'}
@@ -131,8 +134,8 @@
         p_address:address,
         p_payment_method:pay,
         p_items:items,
-        p_customer_lat:window.__customerCoords?.lat??null,
-        p_customer_lng:window.__customerCoords?.lng??null,
+        p_customer_lat:customerCoords?.lat??null,
+        p_customer_lng:customerCoords?.lng??null,
         p_transfer_phone:transferPhone,
         p_payment_proof_url:proofUrl
       }),25000,'إنشاء الطلب استغرق وقتًا طويلًا. لم يتم تجميد الصفحة؛ حاول مرة أخرى.');
