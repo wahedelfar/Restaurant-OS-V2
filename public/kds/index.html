@@ -168,7 +168,7 @@
       if(!supabaseClient)return;
       try{
         if(realtimeChannel)supabaseClient.removeChannel(realtimeChannel);
-        realtimeChannel=supabaseClient.channel('kds-orders').on('postgres_changes',{event:'INSERT',schema:'public',table:'orders'},()=>{clearTimeout(realtimeRefreshTimer);realtimeRefreshTimer=setTimeout(()=>{playDing();loadOrders();},700);}).subscribe();
+        realtimeChannel=supabaseClient.channel('kds-orders').on('postgres_changes',{event:'INSERT',schema:'public',table:'orders'},()=>{clearTimeout(realtimeRefreshTimer);realtimeRefreshTimer=setTimeout(()=>{loadOrders();},700);}).subscribe();
       }catch(e){console.warn('Realtime unavailable',e);}
     }
 
