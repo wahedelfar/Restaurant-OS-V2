@@ -8,9 +8,18 @@
   try{
     const ts=Date.now();
     const baseRuntime='https://raw.githubusercontent.com/wahedelfar/Restaurant-OS-V2/main/app.js';
-    const r=await fetch(baseRuntime+'?v='+ts,{cache:'no-store'});
-    if(!r.ok) throw new Error('تعذر تحميل محرك الموقع الأساسي ('+r.status+')');
-    let code=await r.text();
+    let r=null;
+    let code='';
+    try{
+      r=await fetch(baseRuntime+'?v='+ts,{cache:'no-store'});
+      if(!r.ok) throw new Error('تعذر تحميل محرك الموقع الأساسي ('+r.status+')');
+      code=await r.text();
+      try{const cache=await caches.open('ros-runtime-v1');await cache.put(baseRuntime,new Response(code,{headers:{'Content-Type':'application/javascript; charset=utf-8'}}));}catch(_){ }
+    }catch(networkErr){
+      const cached=await caches.match(baseRuntime);
+      if(!cached) throw networkErr;
+      code=await cached.text();
+    }
     const start=code.indexOf('async function loadSupabase(){');
     const end=code.indexOf('\nasync function init(){',start);
     if(start<0||end<0) throw new Error('نسخة محرك الموقع الأساسية غير متوافقة مع الإصلاح الحالي');
