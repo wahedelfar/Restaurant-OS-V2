@@ -43,6 +43,8 @@ async function loadSupabase(){
   const tables=await db.from('tables').select('*').eq('restaurant_id',r.data.id).order('table_number');
   if(tables.error)throw tables.error;
   store.tables=tables.data||[];
+  window.__ROS_STORE__=store;
+  if(window.ROSOffline?.saveSnapshot) window.ROSOffline.saveSnapshot({restaurant:store.restaurant,categories:store.categories,products:store.products,tables:store.tables,orders:store.orders});
   const {data:{session}}=await db.auth.getSession();
   if(session){const o=await db.from('orders').select('*').eq('restaurant_id',r.data.id).order('created_at',{ascending:false}).limit(100);if(o.error)throw o.error;store.orders=o.data||[]}else store.orders=[];
   return true
@@ -55,12 +57,20 @@ async function init(){
   try{
     if(C.mode==='supabase'&&C.supabaseUrl&&C.supabaseAnonKey){
       if(!window.supabase||typeof window.supabase.createClient!=='function'){
-        showFatal('مكتبة Supabase لم يتم تحميلها. افتح الموقع مرة أخرى أو جرّب Chrome.');
+        const snap=window.ROSOffline?.loadSnapshot?await window.ROSOffline.loadSnapshot():null;
+        if(snap?.restaurant){
+          store={restaurant:snap.restaurant,categories:snap.categories||[],products:snap.products||[],tables:snap.tables||[],orders:snap.orders||[]};
+          window.__ROS_STORE__=store;
+          renderRouter();
+          return;
+        }
+        showFatal('لا يوجد اتصال بالإنترنت ولم يتم حفظ نسخة محلية بعد. افتح الموقع مرة واحدة أثناء الاتصال ثم جرّب مجددًا.');
         return;
       }
       db=window.supabase.createClient(C.supabaseUrl,C.supabaseAnonKey);
       try{const ok=await loadSupabase();if(!ok)toast('لم يتم إنشاء المطعم بعد — افتح لوحة الإدارة لإنشائه')}catch(e){console.error(e);seed();toast('تعذر الاتصال بـ Supabase — تم تشغيل نسخة العرض المحلية')}
     }else{seed()}
+    window.__ROS_STORE__=store;
     renderRouter();
   }catch(e){console.error(e);showFatal('حدث خطأ غير متوقع أثناء تشغيل الموقع: '+(e?.message||e));}
 }
