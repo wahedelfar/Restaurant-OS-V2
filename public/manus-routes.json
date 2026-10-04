@@ -1,0 +1,32 @@
+{
+  "routes": [
+    {
+      "path": "/",
+      "title": "القائمة الرقمية"
+    },
+    {
+      "path": "/admin/",
+      "title": "لوحة الإدارة"
+    },
+    {
+      "path": "/kds/",
+      "title": "المطبخ"
+    },
+    {
+      "path": "/kitchen/",
+      "title": "المطبخ"
+    },
+    {
+      "path": "/track",
+      "title": "تتبع الطلب"
+    },
+    {
+      "path": "/dine-track",
+      "title": "تتبع الطلب داخل المطعم"
+    },
+    {
+      "path": "/driver",
+      "title": "تطبيق المندوب"
+    }
+  ]
+}

@@ -2,7 +2,7 @@ const C=window.APP_CONFIG;let db=null,store={restaurant:null,categories:[],produ
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const money=n=>`${Number(n||0).toFixed(0)} ${C.currency}`;
 function toast(x){$('#toast').innerHTML=`<div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] rounded-2xl bg-black text-white px-5 py-3 shadow-2xl">${esc(x)}</div>`;setTimeout(()=>$('#toast').innerHTML='',2500)}
-function persist(){localStorage.setItem('ros_v2_demo',JSON.stringify(store))}
+function persist(){localStorage.setItem('ros_v2_demo',JSON.stringify(store));try{window.ROSOffline?.saveSnapshot?.(store)}catch(_){} }
 function seed(){store.restaurant={...C.demoRestaurant};store.categories=structuredClone(C.demoCategories);store.products=structuredClone(C.demoProducts);store.tables=Array.from({length:30},(_,i)=>({id:'demo-t'+(i+1),restaurant_id:store.restaurant.id,table_number:i+1,active:true}));store.orders=[]}
 const THEMES={
   obsidian:{name:'Obsidian Gold',accent:'#D4AF37',bg:'#0D0E10',surface:'#17191D',surface2:'#202329',text:'#F6F1E7',muted:'#A9A39A'},
@@ -43,6 +43,8 @@ async function loadSupabase(){
   const tables=await db.from('tables').select('*').eq('restaurant_id',r.data.id).order('table_number');
   if(tables.error)throw tables.error;
   store.tables=tables.data||[];
+  window.__ROS_STORE__=store;
+  if(window.ROSOffline?.saveSnapshot) window.ROSOffline.saveSnapshot({restaurant:store.restaurant,categories:store.categories,products:store.products,tables:store.tables,orders:store.orders});
   const {data:{session}}=await db.auth.getSession();
   if(session){const o=await db.from('orders').select('*').eq('restaurant_id',r.data.id).order('created_at',{ascending:false}).limit(100);if(o.error)throw o.error;store.orders=o.data||[]}else store.orders=[];
   return true
@@ -55,12 +57,24 @@ async function init(){
   try{
     if(C.mode==='supabase'&&C.supabaseUrl&&C.supabaseAnonKey){
       if(!window.supabase||typeof window.supabase.createClient!=='function'){
-        showFatal('مكتبة Supabase لم يتم تحميلها. افتح الموقع مرة أخرى أو جرّب Chrome.');
+        const snap=window.ROSOffline?.loadSnapshot?await window.ROSOffline.loadSnapshot():null;
+        if(snap?.restaurant){
+          store={restaurant:snap.restaurant,categories:snap.categories||[],products:snap.products||[],tables:snap.tables||[],orders:snap.orders||[]};
+          window.__ROS_STORE__=store;
+          renderRouter();
+          return;
+        }
+        seed();
+        window.__ROS_STORE__=store;
+        renderRouter();
+        persist();
+        toast('لا يوجد اتصال — تم تشغيل وضع العرض المحلي');
         return;
       }
       db=window.supabase.createClient(C.supabaseUrl,C.supabaseAnonKey);
       try{const ok=await loadSupabase();if(!ok)toast('لم يتم إنشاء المطعم بعد — افتح لوحة الإدارة لإنشائه')}catch(e){console.error(e);seed();toast('تعذر الاتصال بـ Supabase — تم تشغيل نسخة العرض المحلية')}
     }else{seed()}
+    window.__ROS_STORE__=store;
     renderRouter();
   }catch(e){console.error(e);showFatal('حدث خطأ غير متوقع أثناء تشغيل الموقع: '+(e?.message||e));}
 }
@@ -75,7 +89,7 @@ function renderMenu(){
  renderCategories();renderProducts();updateCart();
 }
 function renderCategories(){const cats=[{id:'all',name:'الكل'},...store.categories];$('#cats').innerHTML=cats.map(c=>`<button onclick="currentCat='${c.id}';renderCategories();renderProducts()" class="cat-pill ${currentCat===c.id?'active':''}">${esc(c.name)}</button>`).join('')}
-function renderProducts(){const list=store.products.filter(p=>p.available&&(currentCat==='all'||p.category_id===currentCat));$('#products').innerHTML=list.length?list.map(p=>`<article class="product-card-lux"><div class="product-image-wrap"><img src="${esc(p.image_url||'')}" alt="${esc(p.name)}" loading="lazy" onerror="this.style.display='none'"><span class="price-chip">${money(p.price)}</span></div><div class="p-4"><div class="font-extrabold text-lg">${esc(p.name)}</div><div class="text-sm min-h-10 mt-1" style="color:var(--muted)">${esc(p.description)}</div><div class="flex items-center justify-between mt-4"><span class="text-xs" style="color:var(--muted)">جاهز للطلب</span><button onclick="add('${p.id}')" class="add-btn">أضف للسلة</button></div></div></article>`).join(''):'<div class="col-span-full text-center py-16" style="color:var(--muted)">لا توجد منتجات متاحة في هذا القسم حاليًا.</div>'}
+function renderProducts(){const list=store.products.filter(p=>p.available&&(currentCat==='all'||p.category_id===currentCat));$('#products').innerHTML=list.length?list.map(p=>`<article class="product-card-lux"><div class="product-image-wrap"><div class="product-fallback" aria-hidden="true">🍕</div><img src="${esc(p.image_url||'')}" alt="${esc(p.name)}" loading="lazy" onerror="this.style.display='none'"><span class="price-chip">${money(p.price)}</span></div><div class="p-4"><div class="font-extrabold text-lg">${esc(p.name)}</div><div class="text-sm min-h-10 mt-1" style="color:var(--muted)">${esc(p.description)}</div><div class="flex items-center justify-between mt-4"><span class="text-xs" style="color:var(--muted)">جاهز للطلب</span><button onclick="add('${p.id}')" class="add-btn">أضف للسلة</button></div></div></article>`).join(''):'<div class="col-span-full text-center py-16" style="color:var(--muted)">لا توجد منتجات متاحة في هذا القسم حاليًا.</div>'}
 function add(id){const p=store.products.find(x=>x.id===id);if(!p)return;let x=cart.find(x=>x.id===id);x?x.qty++:cart.push({id,name:p.name,price:p.price,qty:1});updateCart();toast('تمت إضافة المنتج')}
 function updateCart(){const c=$('#cartCount');if(c)c.textContent=cart.reduce((a,b)=>a+b.qty,0)}
 function openCart(){const total=cart.reduce((a,b)=>a+b.price*b.qty,0),table=tableFromUrl();$('#modal').innerHTML=`<div class="fixed inset-0 modal z-50 p-4 grid place-items-end md:place-items-center"><div class="bg-white w-full max-w-lg rounded-3xl p-5 max-h-[90vh] overflow-auto"><div class="flex justify-between"><h2 class="text-2xl font-extrabold">السلة</h2><button onclick="closeModal()">✕</button></div><div class="space-y-3 my-5">${cart.length?cart.map(x=>`<div class="flex items-center justify-between border rounded-2xl p-3"><div><b>${esc(x.name)}</b><div>${x.qty} × ${money(x.price)}</div></div><div class="flex gap-2"><button onclick="chg('${x.id}',-1)" class="w-9 h-9 rounded-lg border">−</button><button onclick="chg('${x.id}',1)" class="w-9 h-9 rounded-lg border">+</button></div></div>`).join(''):'<div class="text-center text-gray-500 py-10">السلة فارغة</div>'}</div>${cart.length?`<div class="font-extrabold text-xl mb-4">الإجمالي: ${money(total)}</div><button onclick="checkout()" class="w-full py-4 rounded-2xl text-white font-extrabold" style="background:var(--brand)">متابعة الطلب</button>`:''}</div></div>`}
@@ -92,10 +106,32 @@ function prepareDineInWhatsApp(table){
   if(a)a.href=buildDineInWaUrl(table,name);
   return true;
 }
+async function queueOfflineOrder(order){
+  const local={...order,id:'offline-'+Date.now(),created_at:new Date().toISOString(),sync_status:'pending'};
+  store.orders.unshift(local);persist();
+  try{await window.ROSOffline?.enqueue?.('order',local)}catch(_){ }
+  return local;
+}
+function showOfflineOrderSaved(order){
+  const table=order.table_number?` للطاولة ${esc(order.table_number)}`:'';
+  $('#modal').innerHTML=`<div class="fixed inset-0 modal z-50 p-4 grid place-items-center"><div class="checkout-modal w-full max-w-lg rounded-3xl p-6 text-center"><div class="text-5xl mb-3">✓</div><h2 class="text-2xl font-extrabold">تم حفظ الطلب محليًا</h2><p class="mt-3" style="color:var(--muted);line-height:1.9">تم حفظ طلبك${table} على هذا الجهاز وسيتم إرساله تلقائيًا عند عودة الاتصال.</p><div class="mt-4 rounded-2xl p-3" style="background:var(--surface2)">رقم الطلب المحلي: <code>${esc(order.id)}</code></div><button onclick="closeModal()" class="w-full mt-5 py-3 rounded-2xl font-extrabold" style="background:var(--brand);color:#111">العودة للقائمة</button></div></div>`;
+  cart=[];updateCart();
+}
+async function flushOfflineQueue(){
+  if(!db||!window.ROSOffline?.queueList||!window.ROSOffline.isOnline())return;
+  const items=await window.ROSOffline.queueList();
+  for(const item of items){if(item.type!=='order')continue;try{const r=await db.from('orders').insert(item.payload);if(!r.error)await window.ROSOffline.remove(item.id)}catch(_){break}}
+}
+async function handleDineInSubmit(table){
+  const name=$('#cust')?.value.trim()||'عميل';
+  const order={restaurant_id:store.restaurant.id,table_id:store.tables.find(x=>String(x.table_number)===String(table))?.id||null,table_number:Number(table),order_type:'dine_in',customer_name:name,total:cart.reduce((a,b)=>a+b.price*b.qty,0),items:cart.map(x=>({product_id:x.id,name:x.name,quantity:x.qty,price:x.price})),status:'new'};
+  if(!db||!window.ROSOffline?.isOnline()){await queueOfflineOrder(order);showOfflineOrderSaved(order);return false}
+  prepareDineInWhatsApp(table);return true;
+}
 function checkout(){
   const table=tableFromUrl(),outside=!table;
   const dineHref=table?buildDineInWaUrl(table,'عميل'):'#';
-  $('#modal').innerHTML=`<div class="fixed inset-0 modal z-50 p-4 grid place-items-end md:place-items-center" onclick="if(event.target===this)closeModal()"><div class="checkout-modal w-full max-w-lg rounded-3xl p-5 max-h-[92vh] overflow-auto"><div class="flex justify-between items-center"><h2 class="text-2xl font-extrabold">تأكيد الطلب</h2><button onclick="closeModal()" class="w-10 h-10 rounded-full border text-2xl" aria-label="إغلاق">×</button></div><div class="checkout-note rounded-2xl p-4 my-4 font-bold">${table?'حضرتك شرفتنا على — الطاولة رقم '+esc(table):'طلب خارجي / توصيل'}</div>${outside?`<div class="space-y-3"><input id="cust" class="w-full border rounded-2xl p-4" placeholder="الاسم"><input id="customerPhone" inputmode="tel" class="w-full border rounded-2xl p-4" placeholder="رقم الهاتف" required><textarea id="addr" class="w-full border rounded-2xl p-4" placeholder="العنوان"></textarea><select id="pay" onchange="toggleVodafoneFields()" class="w-full border rounded-2xl p-4"><option value="cash">دفع عند الاستلام</option><option value="vodafone">Vodafone Cash</option></select><div id="vodafoneBox" class="vodafone-box hidden rounded-2xl p-4 space-y-3"><div class="font-extrabold text-lg">الدفع عبر Vodafone Cash</div><div class="font-bold">يرجى التحويل على الرقم: <span dir="ltr">01063537686</span></div><p class="text-sm">بعد التحويل، يرجى إرفاق Screenshot لعملية التحويل.</p><input id="transferPhone" inputmode="tel" class="w-full border rounded-2xl p-4" placeholder="رقم التليفون المحوّل منه"><input id="proof" type="file" accept="image/*" onchange="$('#proofName').textContent=this.files[0]?.name||''" class="w-full border rounded-2xl p-3"><div id="proofName" class="text-xs" style="color:var(--muted)"></div></div></div>`:`<input id="cust" oninput="prepareDineInWhatsApp(${JSON.stringify(table)})" class="w-full border rounded-2xl p-4" placeholder="اسم اختياري">`} ${table?`<a id="dineWaLink" href="${esc(dineHref)}" onclick="prepareDineInWhatsApp(${JSON.stringify(table)})" class="w-full mt-5 py-4 rounded-2xl text-white font-extrabold flex items-center justify-center" style="background:var(--brand);color:#111;text-decoration:none">إرسال الطلب عبر WhatsApp</a>`:`<button onclick="sendOrder(null)" class="w-full mt-5 py-4 rounded-2xl text-white font-extrabold" style="background:var(--brand);color:#111">إرسال الطلب عبر WhatsApp</button>`}</div></div>`;
+  $('#modal').innerHTML=`<div class="fixed inset-0 modal z-50 p-4 grid place-items-end md:place-items-center" onclick="if(event.target===this)closeModal()"><div class="checkout-modal w-full max-w-lg rounded-3xl p-5 max-h-[92vh] overflow-auto"><div class="flex justify-between items-center"><h2 class="text-2xl font-extrabold">تأكيد الطلب</h2><button onclick="closeModal()" class="w-10 h-10 rounded-full border text-2xl" aria-label="إغلاق">×</button></div><div class="checkout-note rounded-2xl p-4 my-4 font-bold">${table?'حضرتك شرفتنا على — الطاولة رقم '+esc(table):'طلب خارجي / توصيل'}</div>${outside?`<div class="space-y-3"><input id="cust" class="w-full border rounded-2xl p-4" placeholder="الاسم"><input id="customerPhone" inputmode="tel" class="w-full border rounded-2xl p-4" placeholder="رقم الهاتف" required><textarea id="addr" class="w-full border rounded-2xl p-4" placeholder="العنوان"></textarea><select id="pay" onchange="toggleVodafoneFields()" class="w-full border rounded-2xl p-4"><option value="cash">دفع عند الاستلام</option><option value="vodafone">Vodafone Cash</option></select><div id="vodafoneBox" class="vodafone-box hidden rounded-2xl p-4 space-y-3"><div class="font-extrabold text-lg">الدفع عبر Vodafone Cash</div><div class="font-bold">يرجى التحويل على الرقم: <span dir="ltr">01063537686</span></div><p class="text-sm">بعد التحويل، يرجى إرفاق Screenshot لعملية التحويل.</p><input id="transferPhone" inputmode="tel" class="w-full border rounded-2xl p-4" placeholder="رقم التليفون المحوّل منه"><input id="proof" type="file" accept="image/*" onchange="$('#proofName').textContent=this.files[0]?.name||''" class="w-full border rounded-2xl p-3"><div id="proofName" class="text-xs" style="color:var(--muted)"></div></div></div>`:`<input id="cust" oninput="prepareDineInWhatsApp(${JSON.stringify(table)})" class="w-full border rounded-2xl p-4" placeholder="اسم اختياري">`} ${table?`<a id="dineWaLink" href="${esc(dineHref)}" onclick="return handleDineInSubmit(${JSON.stringify(table)})" class="w-full mt-5 py-4 rounded-2xl text-white font-extrabold flex items-center justify-center" style="background:var(--brand);color:#111;text-decoration:none">إرسال الطلب عبر WhatsApp</a>`:`<button onclick="sendOrder(null)" class="w-full mt-5 py-4 rounded-2xl text-white font-extrabold" style="background:var(--brand);color:#111">إرسال الطلب عبر WhatsApp</button>`}</div></div>`;
   if(outside)toggleVodafoneFields();
 }
 function toggleVodafoneFields(){const pay=$('#pay')?.value;const box=$('#vodafoneBox');if(!box)return;box.classList.toggle('hidden',pay!=='vodafone');const phone=$('#transferPhone'),proof=$('#proof');if(phone)phone.required=pay==='vodafone';if(proof)proof.required=pay==='vodafone'}
@@ -141,7 +177,8 @@ async function sendOrder(table){
     const tableRow=null;
     const order={restaurant_id:store.restaurant.id,table_id:null,table_number:null,order_type:'delivery',customer_name:name,customer_phone:customerPhone,address:addr,payment_method:pay,total,items:cart.map(x=>({product_id:x.id,name:x.name,quantity:x.qty,price:x.price})),status:'new'};
     if(transferPhone)order.transfer_phone=transferPhone;if(proofUrl)order.payment_proof_url=proofUrl;
-    if(db){const r=await db.from('orders').insert(order);if(r.error)console.warn('External order save failed:',r.error)}else{store.orders.unshift({...order,id:'o'+Date.now(),created_at:new Date().toISOString()});persist()}
+    if(!db||!window.ROSOffline?.isOnline()){await queueOfflineOrder(order);showOfflineOrderSaved(order);return}
+    const r=await db.from('orders').insert(order);if(r.error)console.warn('External order save failed:',r.error);
     window.location.assign(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`);
   }catch(e){console.error(e);toast(e?.message||'حدث خطأ أثناء إرسال الطلب')}
   finally{if(btn){btn.disabled=false;btn.textContent='إرسال الطلب عبر WhatsApp';btn.style.opacity=''}}
